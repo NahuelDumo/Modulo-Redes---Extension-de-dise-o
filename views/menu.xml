@@ -70,10 +70,12 @@
         </record>
 
 
-        <!-- Cambiar nombre del menú Operaciones a 'Diseño' -->
-        <menuitem id="ModuloDisenoOdoo.menu_diseno_operaciones" name="Diseño"/>
+        <!-- Renombrar el menú superior Operaciones a 'Diseños' correctamente -->
+        <record id="ModuloDisenoOdoo.menu_diseno_operaciones" model="ir.ui.menu">
+            <field name="name">Diseños</field>
+        </record>
 
-        <!-- Estructura del Menú Superior: Pestaña 'Redes' al lado de 'Diseño' -->
+        <!-- Estructura del Menú Superior: Pestaña 'Redes' al lado de 'Diseños' -->
         <menuitem id="menu_redes_root"
                   name="Redes"
                   parent="ModuloDisenoOdoo.menu_diseno_root"
