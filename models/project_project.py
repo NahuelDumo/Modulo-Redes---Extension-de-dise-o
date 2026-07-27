@@ -69,6 +69,17 @@ class ProjectProject(models.Model):
             if self.redes_plan_id.user_barbara_id:
                 self.user_barbara_id = self.redes_plan_id.user_barbara_id
 
+    def _create_redes_task(self, vals):
+        """Helper para asignar usuarios en tareas soportando user_ids o user_id de Odoo"""
+        Task = self.env['project.task']
+        user_id = vals.pop('user_id', None)
+        if user_id:
+            if 'user_ids' in Task._fields:
+                vals['user_ids'] = [(6, 0, [user_id])]
+            elif 'user_id' in Task._fields:
+                vals['user_id'] = user_id
+        return Task.create(vals)
+
     def action_generar_tareas_redes(self):
         """
         Genera automáticamente la grilla completa de las 11 tareas de Redes
@@ -78,14 +89,13 @@ class ProjectProject(models.Model):
         if not self.duracion_meses or self.duracion_meses <= 0:
             raise UserError(_("Por favor, especifica una duración en meses mayor a 0."))
 
-        Task = self.env['project.task']
         Design = self.env['design.design']
         start_date = self.fecha_inicio_redes or fields.Date.today()
 
         _logger.info(f"Generando tareas de Redes para el proyecto {self.name} por {self.duracion_meses} meses.")
 
         # 1. Definición de Estrategia de Contenido (Tarea Única Inicial)
-        Task.create({
+        self._create_redes_task({
             'name': '1) Definición de Estrategia de Contenido',
             'project_id': self.id,
             'user_id': self.user_abril_id.id if self.user_abril_id else self.user_id.id,
@@ -102,7 +112,7 @@ class ProjectProject(models.Model):
             fecha_fin_mes = start_date + timedelta(days=mes_offset_days + 28)
 
             # 2. Armado de calendario (Mensual)
-            Task.create({
+            self._create_redes_task({
                 'name': f'2) Armado de calendario - Mes {mes_idx}',
                 'project_id': self.id,
                 'user_id': self.user_abril_id.id if self.user_abril_id else self.user_id.id,
@@ -113,10 +123,10 @@ class ProjectProject(models.Model):
             })
 
             # 9. Armado de presentación con métricas (Mensual)
-            Task.create({
+            self._create_redes_task({
                 'name': f'9) Armado de presentación con métricas - Mes {mes_idx}',
                 'project_id': self.id,
-                'user_id': self.user_id.id,
+                'user_id': self.user_id.id if hasattr(self, 'user_id') else None,
                 'date_deadline': fecha_fin_mes - timedelta(days=2),
                 'es_tarea_redes': True,
                 'tipo_tarea_redes': 'metricas_presentacion',
@@ -124,10 +134,10 @@ class ProjectProject(models.Model):
             })
 
             # 10. Reunión interna de análisis de métricas (Mensual)
-            Task.create({
+            self._create_redes_task({
                 'name': f'10) Reunión interna de análisis de métricas - Mes {mes_idx}',
                 'project_id': self.id,
-                'user_id': self.user_vero_id.id if self.user_vero_id else self.user_id.id,
+                'user_id': self.user_vero_id.id if self.user_vero_id else (self.user_id.id if hasattr(self, 'user_id') else None),
                 'date_deadline': fecha_fin_mes - timedelta(days=1),
                 'es_tarea_redes': True,
                 'tipo_tarea_redes': 'reunion_interna',
@@ -135,10 +145,10 @@ class ProjectProject(models.Model):
             })
 
             # 11. Reunión con el cliente de análisis de métricas (Mensual/Periódica)
-            Task.create({
+            self._create_redes_task({
                 'name': f'11) Reunión con el cliente de análisis de métricas - Mes {mes_idx}',
                 'project_id': self.id,
-                'user_id': self.user_barbara_id.id if self.user_barbara_id else self.user_id.id,
+                'user_id': self.user_barbara_id.id if self.user_barbara_id else (self.user_id.id if hasattr(self, 'user_id') else None),
                 'date_deadline': fecha_fin_mes,
                 'es_tarea_redes': True,
                 'tipo_tarea_redes': 'reunion_cliente',
@@ -151,7 +161,7 @@ class ProjectProject(models.Model):
                 fecha_semana = fecha_inicio_mes + timedelta(days=(sem - 1) * 7)
 
                 # 3. Redacción de copys y contenidos
-                Task.create({
+                self._create_redes_task({
                     'name': f'3) Redacción de copys y contenidos - Semana {semana_global} (Mes {mes_idx})',
                     'project_id': self.id,
                     'date_deadline': fecha_semana + timedelta(days=2),
@@ -161,7 +171,7 @@ class ProjectProject(models.Model):
                 })
 
                 # 4. Revisión de contenidos
-                Task.create({
+                self._create_redes_task({
                     'name': f'4) Revisión de contenidos - Semana {semana_global} (Mes {mes_idx})',
                     'project_id': self.id,
                     'date_deadline': fecha_semana + timedelta(days=3),
@@ -171,7 +181,7 @@ class ProjectProject(models.Model):
                 })
 
                 # 8. Verificación de publicación
-                Task.create({
+                self._create_redes_task({
                     'name': f'8) Verificación de publicación - Semana {semana_global} (Mes {mes_idx})',
                     'project_id': self.id,
                     'date_deadline': fecha_semana + timedelta(days=6),
@@ -198,7 +208,7 @@ class ProjectProject(models.Model):
                     })
 
                     # 5. Diseño de cada publicación (Diseño Simplificado)
-                    task_diseno = Task.create({
+                    task_diseno = self._create_redes_task({
                         'name': f'5) Diseño de publicación {p} (Mes {mes_idx}) - Diseño Simplificado',
                         'project_id': self.id,
                         'date_deadline': fecha_diseno,
@@ -210,7 +220,7 @@ class ProjectProject(models.Model):
                     nuevo_diseno.task_id = task_diseno.id
 
                     # 6. Publicación de contenidos
-                    Task.create({
+                    self._create_redes_task({
                         'name': f'6) Publicación de contenido {p} (Mes {mes_idx})',
                         'project_id': self.id,
                         'date_deadline': fecha_publi,
@@ -222,7 +232,7 @@ class ProjectProject(models.Model):
         # 7. Configuración de campañas pagas (Por cada red social contratada)
         redes_list = [r.strip() for r in (self.redes_sociales or 'Meta Ads').split(',') if r.strip()]
         for red in redes_list:
-            Task.create({
+            self._create_redes_task({
                 'name': f'7) Configuración de campañas pagas - {red}',
                 'project_id': self.id,
                 'date_deadline': start_date + timedelta(days=10),
