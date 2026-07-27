@@ -10,6 +10,23 @@ _logger = logging.getLogger(__name__)
 class ProjectProject(models.Model):
     _inherit = 'project.project'
 
+    def _register_hook(self):
+        res = super()._register_hook()
+        try:
+            correct_root = self.env.ref('ModuloDisenoOdoo.menu_diseno_root', raise_if_not_found=False)
+            if correct_root:
+                duplicate_roots = self.env['ir.ui.menu'].search([
+                    ('parent_id', '=', False),
+                    ('id', '!=', correct_root.id),
+                    ('name', 'in', ['Diseños', 'Redes', 'Módulo de Redes Sociales - Extensión de Diseños'])
+                ])
+                if duplicate_roots:
+                    duplicate_roots.unlink()
+                    _logger.info("Menú raíz duplicado eliminado exitosamente de ir.ui.menu")
+        except Exception as e:
+            _logger.warning(f"No se pudo limpiar menú duplicado en _register_hook: {e}")
+        return res
+
     is_redes_project = fields.Boolean(
         string='Es Proyecto de Redes',
         default=False,
