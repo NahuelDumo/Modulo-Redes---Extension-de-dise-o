@@ -35,5 +35,30 @@
         <record id="ModuloDisenoOdoo.action_diseno_design" model="ir.actions.act_window">
             <field name="domain">[('es_diseno_simplificado', '!=', True)]</field>
         </record>
+
+        <!-- Vista de Búsqueda y Filtros Dinámicos para Diseños Simplificados de Redes -->
+        <record id="view_design_search_redes" model="ir.ui.view">
+            <field name="name">design.design.search.redes</field>
+            <field name="model">design.design</field>
+            <field name="arch" type="xml">
+                <search string="Buscar Diseños Simplificados">
+                    <field name="name"/>
+                    <field name="cliente_id"/>
+                    <field name="task_id"/>
+                    
+                    <filter string="📌 Pendientes de Aprobación" name="pendientes"
+                            domain="[('state', 'in', ['borrador', 'validacion', 'cliente', 'correcciones_solicitadas'])]"/>
+                    <filter string="✅ Aprobados / Completados" name="aprobados"
+                            domain="[('state', '=', 'aprobado')]"/>
+                    
+                    <separator/>
+                    <group expand="0" string="Agrupar Por">
+                        <filter string="Cliente" name="group_by_cliente" context="{'group_by': 'cliente_id'}"/>
+                        <filter string="Estado" name="group_by_state" context="{'group_by': 'state'}"/>
+                        <filter string="Etapa" name="group_by_etapa" context="{'group_by': 'etapa'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
     </data>
 </odoo>
