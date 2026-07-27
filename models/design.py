@@ -21,11 +21,6 @@ class Design(models.Model):
         for record in records:
             if record.es_diseno_simplificado:
                 record._cargar_checklist_simplificado()
-                record.message_post(
-                    body=_("📌 **Aviso para Diseñador**: Este registro es un **Diseño Simplificado**. Posee una sola etapa (Etapa 1) y checklist de verificación reducido."),
-                    message_type="comment",
-                    subtype_xmlid="mail.mt_comment"
-                )
         return records
 
     def _cargar_checklist_simplificado(self):

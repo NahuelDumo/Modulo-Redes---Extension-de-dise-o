@@ -70,8 +70,8 @@ class ProjectProject(models.Model):
                 self.user_barbara_id = self.redes_plan_id.user_barbara_id
 
     def _create_redes_task(self, vals):
-        """Helper para asignar usuarios en tareas soportando user_ids o user_id de Odoo"""
-        Task = self.env['project.task']
+        """Helper para asignar usuarios en tareas soportando user_ids o user_id de Odoo con optimización masiva"""
+        Task = self.env['project.task'].with_context(mail_create_nolog=True, mail_create_nosubscribe=True, tracking_disable=True)
         user_id = vals.pop('user_id', None)
         if user_id:
             if 'user_ids' in Task._fields:
@@ -89,7 +89,7 @@ class ProjectProject(models.Model):
         if not self.duracion_meses or self.duracion_meses <= 0:
             raise UserError(_("Por favor, especifica una duración en meses mayor a 0."))
 
-        Design = self.env['design.design']
+        Design = self.env['design.design'].with_context(mail_create_nolog=True, mail_create_nosubscribe=True, tracking_disable=True)
         start_date = self.fecha_inicio_redes or fields.Date.today()
 
         _logger.info(f"Generando tareas de Redes para el proyecto {self.name} por {self.duracion_meses} meses.")
