@@ -47,25 +47,35 @@ class SaleOrder(models.Model):
     def _crear_proyecto_redes_desde_presupuesto(self):
         """Crea el proyecto de Redes vinculado al Presupuesto y genera sus 11 tareas"""
         self.ensure_one()
-        duracion_meses = 6
+        duracion_meses = 1
         product_name = ""
+        max_duration = 0
 
-        # Determinar la duración según el nombre del producto (Anual, Semestral, Puntual) o cantidad
+        # Determinar la duración evaluando todas las líneas de Redes
         for line in self.order_line:
             if line.product_id:
                 pname = (line.product_id.name or '').lower()
                 cname = (line.product_id.categ_id.name or '').lower() if line.product_id.categ_id else ''
                 if 'redes' in cname or 'rrss' in cname or 'redes' in pname or 'rrss' in pname:
-                    product_name = line.product_id.name
+                    if not product_name:
+                        product_name = line.product_id.name
+
+                    current_dur = 1
                     if 'anual' in pname:
-                        duracion_meses = 12
+                        current_dur = 12
+                        product_name = line.product_id.name
                     elif 'semestral' in pname:
-                        duracion_meses = 6
-                    elif 'puntual' in pname:
-                        duracion_meses = 1
+                        current_dur = 6
+                        product_name = line.product_id.name
+                    elif 'puntual' in pname or 'perfil' in pname or 'creaci' in pname:
+                        current_dur = 1
                     elif line.product_uom_qty > 0:
-                        duracion_meses = int(line.product_uom_qty)
-                    break
+                        current_dur = int(line.product_uom_qty)
+
+                    if current_dur > max_duration:
+                        max_duration = current_dur
+
+        duracion_meses = max_duration if max_duration > 0 else 1
 
         project_vals = {
             'name': f"{product_name or 'Redes Sociales'} - {self.partner_id.name} ({self.name})",
