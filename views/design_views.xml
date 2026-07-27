@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Vista Formulario de Diseño extendida para Diseño Simplificado -->
+        <record id="view_design_design_form_redes" model="ir.ui.view">
+            <field name="name">design.design.form.redes</field>
+            <field name="model">design.design</field>
+            <field name="inherit_id" ref="ModuloListasDeVerificación.view_diseno_design_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//sheet" position="before">
+                    <div class="alert alert-warning" role="alert" attrs="{'invisible': [('es_diseno_simplificado', '=', False)]}">
+                        ⚡ <strong>Diseño Simplificado de Redes Sociales</strong>: Este diseño consta de 1 sola etapa y checklist reducido. Al ser aprobado, pasa directamente a completado.
+                    </div>
+                </xpath>
+
+                <xpath expr="//field[@name='categoria_id']" position="after">
+                    <field name="es_diseno_simplificado" readonly="1"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Vista Lista de Diseños con indicador de Diseño Simplificado -->
+        <record id="view_design_design_tree_redes" model="ir.ui.view">
+            <field name="name">design.design.tree.redes</field>
+            <field name="model">design.design</field>
+            <field name="inherit_id" ref="ModuloListasDeVerificación.view_diseno_design_tree"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='etapa']" position="after">
+                    <field name="es_diseno_simplificado" widget="boolean_toggle"/>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

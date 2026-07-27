@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Vista Formulario de Tarea extendida para Redes Sociales -->
+        <record id="view_task_form2_redes" model="ir.ui.view">
+            <field name="name">project.task.form.redes</field>
+            <field name="model">project.task</field>
+            <field name="inherit_id" ref="project.view_task_form2"/>
+            <field name="arch" type="xml">
+                <xpath expr="//div[@name='button_box']" position="inside">
+                    <button name="action_open_associated_design"
+                            type="object"
+                            class="oe_stat_button"
+                            icon="fa-picture-o"
+                            attrs="{'invisible': [('design_id', '=', False)]}">
+                        <div class="o_stat_info">
+                            <span class="o_stat_text">Diseño</span>
+                            <span class="o_stat_text">Simplificado</span>
+                        </div>
+                    </button>
+                </xpath>
+
+                <xpath expr="//field[@name='user_id']" position="after">
+                    <field name="es_tarea_redes"/>
+                    <field name="tipo_tarea_redes" attrs="{'invisible': [('es_tarea_redes', '=', False)]}"/>
+                    <field name="red_social" attrs="{'invisible': [('tipo_tarea_redes', '!=', 'campana_paga')]}"/>
+                    <field name="design_id" attrs="{'invisible': [('design_id', '=', False)]}"/>
+                </xpath>
+            </field>
+        </record>
+
+        <!-- Vista Kanban de Tareas Pendientes de Diseñadores -->
+        <record id="view_task_kanban_designers" model="ir.ui.view">
+            <field name="name">project.task.kanban.designers</field>
+            <field name="model">project.task</field>
+            <field name="arch" type="xml">
+                <kanban default_group_by="user_id" class="o_kanban_small_column">
+                    <field name="name"/>
+                    <field name="user_id"/>
+                    <field name="date_deadline"/>
+                    <field name="stage_id"/>
+                    <field name="design_id"/>
+                    <templates>
+                        <t t-name="kanban-box">
+                            <div t-attf-class="oe_kanban_global_click o_kanban_record_has_image_fill p-3 border-left border-primary rounded shadow-sm">
+                                <div class="o_kanban_record_top mb-2">
+                                    <div class="o_kanban_record_headings">
+                                        <strong class="o_kanban_record_title text-primary"><field name="name"/></strong>
+                                    </div>
+                                </div>
+                                <div class="o_kanban_record_body small text-muted">
+                                    <div>📅 <strong>Vencimiento:</strong> <field name="date_deadline"/></div>
+                                    <div t-if="record.design_id.raw_value">
+                                        🖼️ <strong>Diseño Simplificado:</strong> Vinculado
+                                    </div>
+                                </div>
+                                <div class="o_kanban_record_bottom mt-2">
+                                    <div class="oe_kanban_bottom_left">
+                                        <field name="stage_id" widget="label_selection"/>
+                                    </div>
+                                    <div class="oe_kanban_bottom_right">
+                                        <field name="user_id" widget="many2one_avatar_user"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </t>
+                    </templates>
+                </kanban>
+            </field>
+        </record>
+    </data>
+</odoo>

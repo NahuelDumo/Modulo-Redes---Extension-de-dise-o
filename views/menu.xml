@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Acciones de Ventana del Módulo de Redes -->
+
+        <!-- Acción: Proyectos de Redes -->
+        <record id="action_redes_projects" model="ir.actions.act_window">
+            <field name="name">Proyectos de Redes Sociales</field>
+            <field name="res_model">project.project</field>
+            <field name="view_mode">kanban,tree,form</field>
+            <field name="domain">[('is_redes_project', '=', True)]</field>
+            <field name="context">{'default_is_redes_project': True}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    Crea tu primer proyecto de Redes Sociales
+                </p>
+                <p>
+                    Gestiona los contratos por meses, la grilla de las 11 tareas automatizadas y los diseños simplificados.
+                </p>
+            </field>
+        </record>
+
+        <!-- Acción: Tareas Pendientes de Diseñadores -->
+        <record id="action_redes_designer_tasks" model="ir.actions.act_window">
+            <field name="name">Tareas Pendientes de Diseñadores</field>
+            <field name="res_model">project.task</field>
+            <field name="view_mode">kanban,tree,form,calendar</field>
+            <field name="domain">[('es_tarea_redes', '=', True), ('tipo_tarea_redes', '=', 'diseno_simplificado')]</field>
+            <field name="context">{'search_default_group_by_user': 1}</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">
+                    No hay tareas de diseño pendientes
+                </p>
+            </field>
+        </record>
+
+        <!-- Acción: Diseños Simplificados -->
+        <record id="action_redes_diseno_simplificado" model="ir.actions.act_window">
+            <field name="name">Diseños Simplificados (Redes)</field>
+            <field name="res_model">design.design</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('es_diseno_simplificado', '=', True)]</field>
+            <field name="context">{'default_es_diseno_simplificado': True}</field>
+        </record>
+
+        <!-- Acción: Calendario de Publicaciones -->
+        <record id="action_redes_calendar_tasks" model="ir.actions.act_window">
+            <field name="name">Calendario de Publicaciones</field>
+            <field name="res_model">project.task</field>
+            <field name="view_mode">calendar,tree,kanban,form</field>
+            <field name="domain">[('es_tarea_redes', '=', True), ('tipo_tarea_redes', '=', 'publicacion')]</field>
+        </record>
+
+        <!-- Acción: Plantillas de Planes de Redes -->
+        <record id="action_redes_plan_templates" model="ir.actions.act_window">
+            <field name="name">Plantillas de Planes de Redes</field>
+            <field name="res_model">redes.plan.template</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <!-- Acción: Plantillas de Checklist Corto -->
+        <record id="action_redes_checklist_short_templates" model="ir.actions.act_window">
+            <field name="name">Checklist Corto (Diseño Simplificado)</field>
+            <field name="res_model">design.checklist_template</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[('is_simplified', '=', True)]</field>
+            <field name="context">{'default_is_simplified': True}</field>
+        </record>
+
+
+        <!-- Estructura del Menú Superior: Pestaña 'Redes' al lado de 'Diseños' -->
+        <menuitem id="menu_redes_root"
+                  name="Redes"
+                  parent="ModuloListasDeVerificación.menu_diseno_root"
+                  sequence="15"/>
+
+        <!-- Submenús debajo de 'Redes' -->
+        <menuitem id="menu_redes_proyectos"
+                  name="Proyectos de Redes"
+                  parent="menu_redes_root"
+                  action="action_redes_projects"
+                  sequence="10"/>
+
+        <menuitem id="menu_redes_disenadores"
+                  name="Tareas Pendientes Diseñadores"
+                  parent="menu_redes_root"
+                  action="action_redes_designer_tasks"
+                  sequence="20"/>
+
+        <menuitem id="menu_redes_disenos"
+                  name="Diseños Simplificados"
+                  parent="menu_redes_root"
+                  action="action_redes_diseno_simplificado"
+                  sequence="30"/>
+
+        <menuitem id="menu_redes_calendario"
+                  name="Calendario de Publicaciones"
+                  parent="menu_redes_root"
+                  action="action_redes_calendar_tasks"
+                  sequence="40"/>
+
+        <menuitem id="menu_redes_configuracion"
+                  name="Configuración Redes"
+                  parent="menu_redes_root"
+                  sequence="100"/>
+
+        <menuitem id="menu_redes_config_planes"
+                  name="Planes de Redes"
+                  parent="menu_redes_configuracion"
+                  action="action_redes_plan_templates"
+                  sequence="10"/>
+
+        <menuitem id="menu_redes_config_checklist"
+                  name="Checklist Corto (Simplificado)"
+                  parent="menu_redes_configuracion"
+                  action="action_redes_checklist_short_templates"
+                  sequence="20"/>
+    </data>
+</odoo>

@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Vista Formulario de Proyecto extendida para Redes Sociales -->
+        <record id="view_project_project_form_redes" model="ir.ui.view">
+            <field name="name">project.project.form.redes</field>
+            <field name="model">project.project</field>
+            <field name="inherit_id" ref="project.edit_project"/>
+            <field name="arch" type="xml">
+                <xpath expr="//header" position="inside">
+                    <button name="action_generar_tareas_redes"
+                            string="🚀 Generar Plan de Redes (11 Tareas)"
+                            type="object"
+                            class="btn-primary"
+                            attrs="{'invisible': ['|', ('is_redes_project', '=', False), ('tareas_redes_generadas', '=', True)]}"/>
+                    <button name="action_generar_tareas_redes"
+                            string="🔄 Regenerar Tareas de Redes"
+                            type="object"
+                            class="btn-secondary"
+                            confirm="¿Deseas volver a generar las tareas del plan de redes?"
+                            attrs="{'invisible': ['|', ('is_redes_project', '=', False), ('tareas_redes_generadas', '=', False)]}"/>
+                </xpath>
+
+                <xpath expr="//sheet" position="before">
+                    <div class="alert alert-info" role="alert" attrs="{'invisible': [('is_redes_project', '=', False)]}">
+                        📌 <strong>Proyecto de Redes Sociales Activo</strong>: Configura los meses de contrato y presiona "Generar Plan de Redes" para crear las 11 tareas automatizadas.
+                    </div>
+                </xpath>
+
+                <xpath expr="//notebook" position="inside">
+                    <page string="📱 Configuración de Redes Sociales" name="page_redes_config">
+                        <group>
+                            <group string="Parámetros del Contrato">
+                                <field name="is_redes_project"/>
+                                <field name="redes_plan_id" options="{'no_create': True}"/>
+                                <field name="duracion_meses"/>
+                                <field name="publis_por_mes"/>
+                                <field name="dias_anticipacion_diseno"/>
+                                <field name="redes_sociales"/>
+                                <field name="fecha_inicio_redes"/>
+                                <field name="tareas_redes_generadas" readonly="1"/>
+                            </group>
+                            <group string="Responsables de Proceso">
+                                <field name="user_abril_id" widget="many2one_avatar_user"/>
+                                <field name="user_vero_id" widget="many2one_avatar_user"/>
+                                <field name="user_barbara_id" widget="many2one_avatar_user"/>
+                            </group>
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

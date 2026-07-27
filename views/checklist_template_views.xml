@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Vista Formulario de Plantilla de Checklist extendida para Checklist Corto -->
+        <record id="view_checklist_template_form_redes" model="ir.ui.view">
+            <field name="name">design.checklist_template.form.redes</field>
+            <field name="model">design.checklist_template</field>
+            <field name="inherit_id" ref="ModuloListasDeVerificación.view_diseno_checklist_template_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='etapa']" position="after">
+                    <field name="is_simplified"/>
+                </xpath>
+
+                <xpath expr="//sheet" position="before">
+                    <div class="alert alert-info" role="alert" attrs="{'invisible': [('is_simplified', '=', False)]}">
+                        📝 <strong>Plantilla de Checklist Corto (Diseño Simplificado)</strong>: Los ítems configurados aquí serán utilizados para verificar los diseños simplificados de Redes Sociales.
+                    </div>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

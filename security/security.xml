@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Grupo Administrador (Redes) en la categoría Servicios / Proyectos -->
+        <record id="group_redes_admin" model="res.groups">
+            <field name="name">Administrador (Redes)</field>
+            <field name="category_id" ref="base.module_category_services_project"/>
+            <field name="users" eval="[(4, ref('base.user_admin'))]"/>
+        </record>
+
+        <!-- Grupo Diseñador (Redes) en la categoría Servicios / Proyectos -->
+        <record id="group_redes_designer" model="res.groups">
+            <field name="name">Diseñador (Redes)</field>
+            <field name="category_id" ref="base.module_category_services_project"/>
+        </record>
+
+        <!-- Grupo Usuario (Redes) -->
+        <record id="group_redes_user" model="res.groups">
+            <field name="name">Usuario (Redes)</field>
+            <field name="category_id" ref="base.module_category_services_project"/>
+        </record>
+
+        <!-- Regla de acceso para Proyectos de Redes: Usuarios de Redes ven sus proyectos -->
+        <record id="project_project_redes_rule" model="ir.rule">
+            <field name="name">Proyectos de Redes: acceso usuarios</field>
+            <field name="model_id" ref="project.model_project_project"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_redes_user')), (4, ref('group_redes_admin')), (4, ref('group_redes_designer'))]"/>
+        </record>
+
+        <!-- Regla para Diseños Simplificados: Accesibles para Diseñador (Redes) y Administrador (Redes) -->
+        <record id="design_design_redes_rule" model="ir.rule">
+            <field name="name">Diseño Simplificado: acceso por grupo Redes</field>
+            <field name="model_id" search="[('model', '=', 'design.design')]" model="ir.model"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_redes_designer')), (4, ref('group_redes_admin'))]"/>
+        </record>
+    </data>
+</odoo>

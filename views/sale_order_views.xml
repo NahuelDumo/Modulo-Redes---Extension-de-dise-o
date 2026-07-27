@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Vista Formulario de Presupuesto (sale.order) extendida -->
+        <record id="view_order_form_redes" model="ir.ui.view">
+            <field name="name">sale.order.form.redes</field>
+            <field name="model">sale.order</field>
+            <field name="inherit_id" ref="sale.view_order_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//div[@name='button_box']" position="inside">
+                    <button name="action_view_redes_project"
+                            type="object"
+                            class="oe_stat_button"
+                            icon="fa-share-alt"
+                            attrs="{'invisible': [('redes_project_id', '=', False)]}">
+                        <div class="o_stat_info">
+                            <span class="o_stat_text">Proyecto</span>
+                            <span class="o_stat_text">Redes</span>
+                        </div>
+                    </button>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_redes_plan_template_admin,redes.plan.template.admin,model_redes_plan_template,group_redes_admin,1,1,1,1
+access_redes_plan_template_user,redes.plan.template.user,model_redes_plan_template,group_redes_user,1,0,0,0
+access_redes_plan_template_designer,redes.plan.template.designer,model_redes_plan_template,group_redes_designer,1,0,0,0
+access_redes_plan_line_admin,redes.plan.line.admin,model_redes_plan_line,group_redes_admin,1,1,1,1
+access_redes_plan_line_user,redes.plan.line.user,model_redes_plan_line,group_redes_user,1,0,0,0

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Plantilla por defecto de Checklist Corto (Diseño Simplificado) -->
+        <record id="default_simplified_checklist_template" model="design.checklist_template">
+            <field name="name">Checklist Corto - Diseño Simplificado Redes</field>
+            <field name="etapa">etapa1</field>
+            <field name="is_simplified">True</field>
+        </record>
+
+        <!-- Ítems del Checklist Corto -->
+        <record id="item_short_1" model="design.checklist_template_item">
+            <field name="template_id" ref="default_simplified_checklist_template"/>
+            <field name="name">Formato y Medidas de Red Social Correctas (1080x1080 / 1080x1920)</field>
+            <field name="orden">1</field>
+        </record>
+
+        <record id="item_short_2" model="design.checklist_template_item">
+            <field name="template_id" ref="default_simplified_checklist_template"/>
+            <field name="name">Ortografía, Texto y Logo de Marca Verificados</field>
+            <field name="orden">2</field>
+        </record>
+
+        <record id="item_short_3" model="design.checklist_template_item">
+            <field name="template_id" ref="default_simplified_checklist_template"/>
+            <field name="name">Paleta de Colores e Identidad Visual Respectada</field>
+            <field name="orden">3</field>
+        </record>
+
+        <!-- Plantilla por defecto de Plan de Redes (8 Publis / 6 Meses) -->
+        <record id="default_redes_plan_standard" model="redes.plan.template">
+            <field name="name">Plan Estándar Redes Sociales - 8 Publis/Mes (6 Meses)</field>
+            <field name="duracion_meses">6</field>
+            <field name="publis_por_mes">8</field>
+            <field name="dias_anticipacion_diseno">5</field>
+            <field name="redes_sociales">Instagram, Facebook, Meta Ads</field>
+        </record>
+    </data>
+</odoo>
