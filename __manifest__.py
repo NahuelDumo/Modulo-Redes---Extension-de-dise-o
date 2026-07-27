@@ -29,13 +29,13 @@
         'security/ir.model.access.csv',
 
         # Vistas principales
-        'views/menu.xml',
         'views/project_project_views.xml',
         'views/project_task_views.xml',
         'views/design_views.xml',
         'views/checklist_template_views.xml',
         'views/redes_plan_views.xml',
         'views/sale_order_views.xml',
+        'views/menu.xml',
 
         # Datos por defecto
         'data/default_redes_data.xml',
