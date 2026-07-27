@@ -10,22 +10,32 @@
                 <xpath expr="//header" position="inside">
                     <field name="is_redes_project" invisible="1"/>
                     <field name="tareas_redes_generadas" invisible="1"/>
+                    <field name="ultimo_mes_generado" invisible="1"/>
+                    <field name="duracion_meses" invisible="1"/>
+                    
                     <button name="action_generar_tareas_redes"
-                            string="🚀 Generar Plan de Redes (11 Tareas)"
+                            string="🚀 Generar Tareas Mes 1"
                             type="object"
                             class="btn-primary"
                             attrs="{'invisible': ['|', ('is_redes_project', '=', False), ('tareas_redes_generadas', '=', True)]}"/>
+
+                    <button name="action_generar_proximo_mes"
+                            string="▶️ Generar Tareas Próximo Mes"
+                            type="object"
+                            class="btn-success"
+                            attrs="{'invisible': ['|', '|', ('is_redes_project', '=', False), ('tareas_redes_generadas', '=', False), ('ultimo_mes_generado', '>=', 'duracion_meses')]}"/>
+
                     <button name="action_generar_tareas_redes"
-                            string="🔄 Regenerar Tareas de Redes"
+                            string="🔄 Regenerar Mes 1"
                             type="object"
                             class="btn-secondary"
-                            confirm="¿Deseas volver a generar las tareas del plan de redes?"
+                            confirm="¿Deseas regenerar las tareas del Mes 1?"
                             attrs="{'invisible': ['|', ('is_redes_project', '=', False), ('tareas_redes_generadas', '=', False)]}"/>
                 </xpath>
 
                 <xpath expr="//sheet" position="before">
                     <div class="alert alert-info" role="alert" attrs="{'invisible': [('is_redes_project', '=', False)]}">
-                        📌 <strong>Proyecto de Redes Sociales Activo</strong>: Configura los meses de contrato y presiona "Generar Plan de Redes" para crear las 11 tareas automatizadas.
+                        📌 <strong>Proyecto de Redes Sociales Activo</strong>: Se generan las tareas ordenadas mes a mes. Tareas actuales del <strong>Mes <field name="ultimo_mes_generado" readonly="1"/> de <field name="duracion_meses" readonly="1"/></strong>.
                     </div>
                 </xpath>
 
@@ -40,6 +50,7 @@
                                 <field name="dias_anticipacion_diseno"/>
                                 <field name="redes_sociales"/>
                                 <field name="fecha_inicio_redes"/>
+                                <field name="ultimo_mes_generado" readonly="1"/>
                                 <field name="tareas_redes_generadas" readonly="1"/>
                             </group>
                             <group string="Responsables de Proceso">

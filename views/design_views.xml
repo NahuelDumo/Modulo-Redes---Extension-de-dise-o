@@ -30,5 +30,10 @@
                 </xpath>
             </field>
         </record>
+
+        <!-- Aislar la vista principal de Diseños Tradicionales ocultando los Diseños Simplificados de Redes -->
+        <record id="ModuloDisenoOdoo.action_diseno_design" model="ir.actions.act_window">
+            <field name="domain">[('es_diseno_simplificado', '!=', True)]</field>
+        </record>
     </data>
 </odoo>
