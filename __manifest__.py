@@ -21,7 +21,7 @@
         'project',
         'sale_management',
         'mail',
-        'ModuloListasDeVerificación'
+        'ModuloDisenoOdoo'
     ],
     'data': [
         # Seguridad

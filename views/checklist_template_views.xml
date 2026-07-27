@@ -5,7 +5,7 @@
         <record id="view_checklist_template_form_redes" model="ir.ui.view">
             <field name="name">design.checklist_template.form.redes</field>
             <field name="model">design.checklist_template</field>
-            <field name="inherit_id" ref="ModuloListasDeVerificación.view_diseno_checklist_template_form"/>
+            <field name="inherit_id" ref="ModuloDisenoOdoo.view_diseno_checklist_template_form"/>
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='etapa']" position="after">
                     <field name="is_simplified"/>

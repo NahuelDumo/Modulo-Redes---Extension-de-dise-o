@@ -71,7 +71,7 @@
         <!-- Estructura del Menú Superior: Pestaña 'Redes' al lado de 'Diseños' -->
         <menuitem id="menu_redes_root"
                   name="Redes"
-                  parent="ModuloListasDeVerificación.menu_diseno_root"
+                  parent="ModuloDisenoOdoo.menu_diseno_root"
                   sequence="15"/>
 
         <!-- Submenús debajo de 'Redes' -->
