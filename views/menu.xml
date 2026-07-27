@@ -70,13 +70,37 @@
         </record>
 
 
-        <!-- Estructura del Menú Superior: Pestaña 'Redes' al lado de 'Diseños' -->
+        <!-- ======================================================= -->
+        <!-- ESTRUCTURA DEL MENÚ SUPERIOR EN LA APP DISEÑOS          -->
+        <!-- ======================================================= -->
+
+        <!-- Botón 1: Menú Desplegable 'Diseños' -->
+        <menuitem id="menu_diseno_main_dropdown"
+                  name="Diseños"
+                  parent="ModuloDisenoOdoo.menu_diseno_root"
+                  sequence="10"/>
+
+        <!-- Submenús de 'Diseños' -->
+        <menuitem id="menu_diseno_tradicional_lista"
+                  name="Diseños"
+                  parent="menu_diseno_main_dropdown"
+                  action="ModuloDisenoOdoo.action_diseno_design"
+                  sequence="10"/>
+
+        <menuitem id="menu_diseno_tradicional_plantillas"
+                  name="Plantillas de Checklist"
+                  parent="menu_diseno_main_dropdown"
+                  action="ModuloDisenoOdoo.action_diseno_checklist_template"
+                  sequence="20"/>
+
+
+        <!-- Botón 2: Menú Desplegable 'Redes' -->
         <menuitem id="menu_redes_root"
                   name="Redes"
                   parent="ModuloDisenoOdoo.menu_diseno_root"
                   sequence="20"/>
 
-        <!-- Submenús debajo de 'Redes' -->
+        <!-- Submenús de 'Redes' -->
         <menuitem id="menu_redes_proyectos"
                   name="Proyectos de Redes"
                   parent="menu_redes_root"

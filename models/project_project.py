@@ -29,7 +29,8 @@ class ProjectProject(models.Model):
                     ('name', '=', 'Operaciones')
                 ])
                 if operaciones_menus:
-                    operaciones_menus.write({'name': 'Diseños', 'sequence': 10})
+                    operaciones_menus.write({'active': False})
+                    _logger.info("Menú viejo Operaciones desactivado exitosamente")
         except Exception as e:
             _logger.warning(f"No se pudo limpiar/renombrar menú en _register_hook: {e}")
         return res
