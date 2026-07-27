@@ -20,7 +20,7 @@
                     </button>
                 </xpath>
 
-                <xpath expr="//field[@name='user_id']" position="after">
+                <xpath expr="//sheet//field[@name='project_id']" position="after">
                     <field name="es_tarea_redes"/>
                     <field name="tipo_tarea_redes" attrs="{'invisible': [('es_tarea_redes', '=', False)]}"/>
                     <field name="red_social" attrs="{'invisible': [('tipo_tarea_redes', '!=', 'campana_paga')]}"/>
