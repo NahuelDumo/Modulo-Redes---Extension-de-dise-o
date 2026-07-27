@@ -4,6 +4,7 @@
         <!-- Plantilla por defecto de Checklist Corto (Diseño Simplificado) -->
         <record id="default_simplified_checklist_template" model="design.checklist_template">
             <field name="name">Checklist Corto - Diseño Simplificado Redes</field>
+            <field name="categoria_id" ref="product.product_category_all"/>
             <field name="etapa">etapa1</field>
             <field name="is_simplified">True</field>
         </record>
