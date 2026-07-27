@@ -18,11 +18,11 @@ class ProjectProject(models.Model):
                 duplicate_roots = self.env['ir.ui.menu'].search([
                     ('parent_id', '=', False),
                     ('id', '!=', correct_root.id),
-                    ('name', 'in', ['Diseños', 'Redes', 'Módulo de Redes Sociales - Extensión de Diseños'])
+                    ('name', 'in', ['Plantillas de Checklist', 'Plantillas de checklist', 'Diseños', 'Redes', 'Módulo de Redes Sociales - Extensión de Diseños'])
                 ])
                 if duplicate_roots:
                     duplicate_roots.unlink()
-                    _logger.info("Menú raíz duplicado eliminado exitosamente de ir.ui.menu")
+                    _logger.info("Menú huérfano 'Plantillas de Checklist' eliminado exitosamente de ir.ui.menu")
 
                 operaciones_menus = self.env['ir.ui.menu'].search([
                     ('parent_id', '=', correct_root.id),
