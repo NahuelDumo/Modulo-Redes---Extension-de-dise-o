@@ -5,7 +5,7 @@
         <record id="view_design_design_form_redes" model="ir.ui.view">
             <field name="name">design.design.form.redes</field>
             <field name="model">design.design</field>
-            <field name="inherit_id" ref="ModuloDisenoOdoo.view_diseno_design_form"/>
+            <field name="inherit_id" ref="ModuloDisenoOdoo.view_form_design"/>
             <field name="arch" type="xml">
                 <xpath expr="//sheet" position="before">
                     <div class="alert alert-warning" role="alert" attrs="{'invisible': [('es_diseno_simplificado', '=', False)]}">
@@ -23,7 +23,7 @@
         <record id="view_design_design_tree_redes" model="ir.ui.view">
             <field name="name">design.design.tree.redes</field>
             <field name="model">design.design</field>
-            <field name="inherit_id" ref="ModuloDisenoOdoo.view_diseno_design_tree"/>
+            <field name="inherit_id" ref="ModuloDisenoOdoo.view_tree_design"/>
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='etapa']" position="after">
                     <field name="es_diseno_simplificado" widget="boolean_toggle"/>
