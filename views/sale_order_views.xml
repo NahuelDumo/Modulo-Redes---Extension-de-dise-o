@@ -8,6 +8,7 @@
             <field name="inherit_id" ref="sale.view_order_form"/>
             <field name="arch" type="xml">
                 <xpath expr="//div[@name='button_box']" position="inside">
+                    <field name="redes_project_id" invisible="1"/>
                     <button name="action_view_redes_project"
                             type="object"
                             class="oe_stat_button"

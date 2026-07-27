@@ -8,6 +8,7 @@
             <field name="inherit_id" ref="project.view_task_form2"/>
             <field name="arch" type="xml">
                 <xpath expr="//div[@name='button_box']" position="inside">
+                    <field name="design_id" invisible="1"/>
                     <button name="action_open_associated_design"
                             type="object"
                             class="oe_stat_button"

@@ -8,6 +8,8 @@
             <field name="inherit_id" ref="project.edit_project"/>
             <field name="arch" type="xml">
                 <xpath expr="//header" position="inside">
+                    <field name="is_redes_project" invisible="1"/>
+                    <field name="tareas_redes_generadas" invisible="1"/>
                     <button name="action_generar_tareas_redes"
                             string="🚀 Generar Plan de Redes (11 Tareas)"
                             type="object"
