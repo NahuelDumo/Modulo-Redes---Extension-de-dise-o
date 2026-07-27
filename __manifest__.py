@@ -40,7 +40,7 @@
         # Datos por defecto
         'data/default_redes_data.xml',
     ],
-    'application': True,
+    'application': False,
     'installable': True,
     'auto_install': False,
 }
