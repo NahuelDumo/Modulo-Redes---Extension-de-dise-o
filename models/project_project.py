@@ -23,8 +23,15 @@ class ProjectProject(models.Model):
                 if duplicate_roots:
                     duplicate_roots.unlink()
                     _logger.info("Menú raíz duplicado eliminado exitosamente de ir.ui.menu")
+
+                operaciones_menus = self.env['ir.ui.menu'].search([
+                    ('parent_id', '=', correct_root.id),
+                    ('name', '=', 'Operaciones')
+                ])
+                if operaciones_menus:
+                    operaciones_menus.write({'name': 'Diseños', 'sequence': 10})
         except Exception as e:
-            _logger.warning(f"No se pudo limpiar menú duplicado en _register_hook: {e}")
+            _logger.warning(f"No se pudo limpiar/renombrar menú en _register_hook: {e}")
         return res
 
     is_redes_project = fields.Boolean(

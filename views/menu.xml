@@ -70,12 +70,6 @@
         </record>
 
 
-        <!-- Renombrar el menú base 'Operaciones' a 'Diseños' para tener los dos botones principales: Diseños y Redes -->
-        <record id="ModuloDisenoOdoo.menu_diseno_operaciones" model="ir.ui.menu">
-            <field name="name">Diseños</field>
-            <field name="sequence">10</field>
-        </record>
-
         <!-- Estructura del Menú Superior: Pestaña 'Redes' al lado de 'Diseños' -->
         <menuitem id="menu_redes_root"
                   name="Redes"
