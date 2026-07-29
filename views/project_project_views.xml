@@ -17,18 +17,21 @@
                             string="🚀 Generar Tareas Mes 1"
                             type="object"
                             class="btn-primary"
+                            groups="group_redes_admin"
                             attrs="{'invisible': ['|', ('is_redes_project', '=', False), ('tareas_redes_generadas', '=', True)]}"/>
 
                     <button name="action_generar_proximo_mes"
                             string="▶️ Generar Tareas Próximo Mes"
                             type="object"
                             class="btn-success"
+                            groups="group_redes_admin"
                             attrs="{'invisible': ['|', '|', ('is_redes_project', '=', False), ('tareas_redes_generadas', '=', False), ('ultimo_mes_generado', '>=', 'duracion_meses')]}"/>
 
                     <button name="action_generar_tareas_redes"
                             string="🔄 Regenerar Mes 1"
                             type="object"
                             class="btn-secondary"
+                            groups="group_redes_admin"
                             confirm="¿Deseas regenerar las tareas del Mes 1?"
                             attrs="{'invisible': ['|', ('is_redes_project', '=', False), ('tareas_redes_generadas', '=', False)]}"/>
                 </xpath>
@@ -39,8 +42,9 @@
                     </div>
                 </xpath>
 
+                <!-- Solapa de Configuración de Redes accesible EXCLUSIVAMENTE para Administrador (Redes) -->
                 <xpath expr="//notebook" position="inside">
-                    <page string="📱 Configuración de Redes Sociales" name="page_redes_config">
+                    <page string="📱 Configuración de Redes Sociales" name="page_redes_config" groups="group_redes_admin">
                         <group>
                             <group string="Parámetros del Contrato">
                                 <field name="is_redes_project"/>

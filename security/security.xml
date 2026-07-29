@@ -28,15 +28,14 @@
             <field name="implied_ids" eval="[(4, ref('group_redes_admin'))]"/>
         </record>
 
-        <!-- Regla de acceso para Proyectos de Redes: Administrador ve los proyectos de Redes -->
+        <!-- Reglas para Proyectos de Redes (project.project) -->
         <record id="project_project_redes_admin_rule" model="ir.rule">
-            <field name="name">Proyectos de Redes: acceso Administrador</field>
+            <field name="name">Proyectos de Redes: acceso total Administrador</field>
             <field name="model_id" ref="project.model_project_project"/>
             <field name="domain_force">[(1, '=', 1)]</field>
             <field name="groups" eval="[(4, ref('group_redes_admin'))]"/>
         </record>
 
-        <!-- Regla de lectura para Diseñadores de Redes: permite leer datos del proyecto en sus tarjetas -->
         <record id="project_project_redes_designer_rule" model="ir.rule">
             <field name="name">Proyectos de Redes: acceso lectura Diseñador</field>
             <field name="model_id" ref="project.model_project_project"/>
@@ -48,14 +47,7 @@
             <field name="perm_unlink" eval="0"/>
         </record>
 
-        <!-- Regla de acceso para Tareas de Redes: Diseñador sólo ve las tareas asignadas a su usuario -->
-        <record id="project_task_redes_designer_rule" model="ir.rule">
-            <field name="name">Tareas de Redes: acceso Diseñador asignado</field>
-            <field name="model_id" ref="project.model_project_task"/>
-            <field name="domain_force">[('user_ids', 'in', [user.id])]</field>
-            <field name="groups" eval="[(4, ref('group_redes_designer'))]"/>
-        </record>
-
+        <!-- Reglas para Tareas de Redes (project.task) -->
         <record id="project_task_redes_admin_rule" model="ir.rule">
             <field name="name">Tareas de Redes: acceso Administrador global</field>
             <field name="model_id" ref="project.model_project_task"/>
@@ -63,12 +55,26 @@
             <field name="groups" eval="[(4, ref('group_redes_admin'))]"/>
         </record>
 
-        <!-- Regla para Diseños Simplificados: Accesibles para Diseñador (Redes) y Administrador (Redes) -->
-        <record id="design_design_redes_rule" model="ir.rule">
-            <field name="name">Diseño Simplificado: acceso por grupo Redes</field>
+        <record id="project_task_redes_designer_rule" model="ir.rule">
+            <field name="name">Tareas de Redes: Diseñador sólo ve sus tareas asignadas</field>
+            <field name="model_id" ref="project.model_project_task"/>
+            <field name="domain_force">[('user_ids', 'in', [user.id])]</field>
+            <field name="groups" eval="[(4, ref('group_redes_designer'))]"/>
+        </record>
+
+        <!-- Reglas para Diseños Simplificados (design.design) -->
+        <record id="design_design_redes_admin_rule" model="ir.rule">
+            <field name="name">Diseño Simplificado: acceso total Administrador</field>
             <field name="model_id" search="[('model', '=', 'design.design')]" model="ir.model"/>
             <field name="domain_force">[(1, '=', 1)]</field>
-            <field name="groups" eval="[(4, ref('group_redes_designer')), (4, ref('group_redes_admin'))]"/>
+            <field name="groups" eval="[(4, ref('group_redes_admin'))]"/>
+        </record>
+
+        <record id="design_design_redes_designer_rule" model="ir.rule">
+            <field name="name">Diseño Simplificado: Diseñador sólo ve sus diseños asignados</field>
+            <field name="model_id" search="[('model', '=', 'design.design')]" model="ir.model"/>
+            <field name="domain_force">['|', ('create_uid', '=', user.id), ('task_id.user_ids', 'in', [user.id])]</field>
+            <field name="groups" eval="[(4, ref('group_redes_designer'))]"/>
         </record>
     </data>
 </odoo>
