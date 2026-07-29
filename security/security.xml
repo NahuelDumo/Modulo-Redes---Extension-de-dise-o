@@ -36,6 +36,19 @@
             <field name="groups" eval="[(4, ref('group_redes_admin'))]"/>
         </record>
 
+        <!-- Regla de lectura para Diseñadores de Redes: permite leer datos del proyecto en sus tarjetas -->
+        <record id="project_project_redes_designer_rule" model="ir.rule">
+            <field name="name">Proyectos de Redes: acceso lectura Diseñador</field>
+            <field name="model_id" ref="project.model_project_project"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_redes_designer'))]"/>
+            <field name="perm_read" eval="1"/>
+            <field name="perm_write" eval="0"/>
+            <field name="perm_create" eval="0"/>
+            <field name="perm_unlink" eval="0"/>
+        </record>
+
+        <!-- Regla de acceso para Tareas de Redes: Diseñador sólo ve las tareas asignadas a su usuario -->
         <record id="project_task_redes_designer_rule" model="ir.rule">
             <field name="name">Tareas de Redes: acceso Diseñador asignado</field>
             <field name="model_id" ref="project.model_project_task"/>

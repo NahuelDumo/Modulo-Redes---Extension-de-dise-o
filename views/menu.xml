@@ -100,53 +100,60 @@
                   parent="ModuloDisenoOdoo.menu_diseno_root"
                   sequence="20"/>
 
-        <!-- Submenús de 'Redes' con grupos de seguridad aplicados -->
-        <menuitem id="menu_redes_proyectos"
-                  name="Proyectos de Redes"
-                  parent="menu_redes_root"
-                  action="action_redes_projects"
-                  groups="group_redes_admin"
-                  sequence="10"/>
+        <!-- Submenús de 'Redes' con reemplazo explícito de groups_id en base de datos -->
+        <record id="menu_redes_proyectos" model="ir.ui.menu">
+            <field name="name">Proyectos de Redes</field>
+            <field name="parent_id" ref="menu_redes_root"/>
+            <field name="action" ref="action_redes_projects"/>
+            <field name="sequence" type="int">10</field>
+            <field name="groups_id" eval="[(6, 0, [ref('group_redes_admin')])]"/>
+        </record>
 
-        <menuitem id="menu_redes_disenadores"
-                  name="Tareas Pendientes Diseñadores"
-                  parent="menu_redes_root"
-                  action="action_redes_designer_tasks"
-                  groups="group_redes_admin,group_redes_designer"
-                  sequence="20"/>
+        <record id="menu_redes_disenadores" model="ir.ui.menu">
+            <field name="name">Tareas Pendientes Diseñadores</field>
+            <field name="parent_id" ref="menu_redes_root"/>
+            <field name="action" ref="action_redes_designer_tasks"/>
+            <field name="sequence" type="int">20</field>
+            <field name="groups_id" eval="[(6, 0, [ref('group_redes_admin'), ref('group_redes_designer')])]"/>
+        </record>
 
-        <menuitem id="menu_redes_disenos"
-                  name="Diseños Simplificados"
-                  parent="menu_redes_root"
-                  action="action_redes_diseno_simplificado"
-                  groups="group_redes_admin,group_redes_designer"
-                  sequence="30"/>
+        <record id="menu_redes_disenos" model="ir.ui.menu">
+            <field name="name">Diseños Simplificados</field>
+            <field name="parent_id" ref="menu_redes_root"/>
+            <field name="action" ref="action_redes_diseno_simplificado"/>
+            <field name="sequence" type="int">30</field>
+            <field name="groups_id" eval="[(6, 0, [ref('group_redes_admin'), ref('group_redes_designer')])]"/>
+        </record>
 
-        <menuitem id="menu_redes_calendario"
-                  name="Calendario de Publicaciones"
-                  parent="menu_redes_root"
-                  action="action_redes_calendar_tasks"
-                  groups="group_redes_admin"
-                  sequence="40"/>
+        <record id="menu_redes_calendario" model="ir.ui.menu">
+            <field name="name">Calendario de Publicaciones</field>
+            <field name="parent_id" ref="menu_redes_root"/>
+            <field name="action" ref="action_redes_calendar_tasks"/>
+            <field name="sequence" type="int">40</field>
+            <field name="groups_id" eval="[(6, 0, [ref('group_redes_admin')])]"/>
+        </record>
 
-        <menuitem id="menu_redes_configuracion"
-                  name="Configuración Redes"
-                  parent="menu_redes_root"
-                  groups="group_redes_admin"
-                  sequence="100"/>
+        <record id="menu_redes_configuracion" model="ir.ui.menu">
+            <field name="name">Configuración Redes</field>
+            <field name="parent_id" ref="menu_redes_root"/>
+            <field name="sequence" type="int">100</field>
+            <field name="groups_id" eval="[(6, 0, [ref('group_redes_admin')])]"/>
+        </record>
 
-        <menuitem id="menu_redes_config_planes"
-                  name="Planes de Redes"
-                  parent="menu_redes_configuracion"
-                  action="action_redes_plan_templates"
-                  groups="group_redes_admin"
-                  sequence="10"/>
+        <record id="menu_redes_config_planes" model="ir.ui.menu">
+            <field name="name">Planes de Redes</field>
+            <field name="parent_id" ref="menu_redes_configuracion"/>
+            <field name="action" ref="action_redes_plan_templates"/>
+            <field name="sequence" type="int">10</field>
+            <field name="groups_id" eval="[(6, 0, [ref('group_redes_admin')])]"/>
+        </record>
 
-        <menuitem id="menu_redes_config_checklist"
-                  name="Checklist Corto (Simplificado)"
-                  parent="menu_redes_configuracion"
-                  action="action_redes_checklist_short_templates"
-                  groups="group_redes_admin"
-                  sequence="20"/>
+        <record id="menu_redes_config_checklist" model="ir.ui.menu">
+            <field name="name">Checklist Corto (Simplificado)</field>
+            <field name="parent_id" ref="menu_redes_configuracion"/>
+            <field name="action" ref="action_redes_checklist_short_templates"/>
+            <field name="sequence" type="int">20</field>
+            <field name="groups_id" eval="[(6, 0, [ref('group_redes_admin')])]"/>
+        </record>
     </data>
 </odoo>
