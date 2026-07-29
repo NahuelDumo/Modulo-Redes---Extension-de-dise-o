@@ -37,7 +37,7 @@
             <field name="name">redes.plan.template.tree</field>
             <field name="model">redes.plan.template</field>
             <field name="arch" type="xml">
-                <tree string="Plantillas de Planes de Redes">
+                <tree string="Plantillas de Planes de Redes" create="true">
                     <field name="name"/>
                     <field name="duracion_meses"/>
                     <field name="publis_por_mes"/>

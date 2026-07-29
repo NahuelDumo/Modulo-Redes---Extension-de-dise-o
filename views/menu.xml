@@ -100,46 +100,53 @@
                   parent="ModuloDisenoOdoo.menu_diseno_root"
                   sequence="20"/>
 
-        <!-- Submenús de 'Redes' -->
+        <!-- Submenús de 'Redes' con grupos de seguridad aplicados -->
         <menuitem id="menu_redes_proyectos"
                   name="Proyectos de Redes"
                   parent="menu_redes_root"
                   action="action_redes_projects"
+                  groups="group_redes_admin"
                   sequence="10"/>
 
         <menuitem id="menu_redes_disenadores"
                   name="Tareas Pendientes Diseñadores"
                   parent="menu_redes_root"
                   action="action_redes_designer_tasks"
+                  groups="group_redes_admin,group_redes_designer"
                   sequence="20"/>
 
         <menuitem id="menu_redes_disenos"
                   name="Diseños Simplificados"
                   parent="menu_redes_root"
                   action="action_redes_diseno_simplificado"
+                  groups="group_redes_admin,group_redes_designer"
                   sequence="30"/>
 
         <menuitem id="menu_redes_calendario"
                   name="Calendario de Publicaciones"
                   parent="menu_redes_root"
                   action="action_redes_calendar_tasks"
+                  groups="group_redes_admin"
                   sequence="40"/>
 
         <menuitem id="menu_redes_configuracion"
                   name="Configuración Redes"
                   parent="menu_redes_root"
+                  groups="group_redes_admin"
                   sequence="100"/>
 
         <menuitem id="menu_redes_config_planes"
                   name="Planes de Redes"
                   parent="menu_redes_configuracion"
                   action="action_redes_plan_templates"
+                  groups="group_redes_admin"
                   sequence="10"/>
 
         <menuitem id="menu_redes_config_checklist"
                   name="Checklist Corto (Simplificado)"
                   parent="menu_redes_configuracion"
                   action="action_redes_checklist_short_templates"
+                  groups="group_redes_admin"
                   sequence="20"/>
     </data>
 </odoo>

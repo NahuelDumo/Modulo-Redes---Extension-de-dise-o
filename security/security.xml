@@ -5,6 +5,7 @@
         <record id="group_redes_admin" model="res.groups">
             <field name="name">Administrador (Redes)</field>
             <field name="category_id" ref="base.module_category_services_project"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
             <field name="users" eval="[(4, ref('base.user_admin'))]"/>
         </record>
 
@@ -12,20 +13,42 @@
         <record id="group_redes_designer" model="res.groups">
             <field name="name">Diseñador (Redes)</field>
             <field name="category_id" ref="base.module_category_services_project"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
         </record>
 
         <!-- Grupo Usuario (Redes) -->
         <record id="group_redes_user" model="res.groups">
             <field name="name">Usuario (Redes)</field>
             <field name="category_id" ref="base.module_category_services_project"/>
+            <field name="implied_ids" eval="[(4, ref('base.group_user'))]"/>
         </record>
 
-        <!-- Regla de acceso para Proyectos de Redes: Usuarios de Redes ven sus proyectos -->
-        <record id="project_project_redes_rule" model="ir.rule">
-            <field name="name">Proyectos de Redes: acceso usuarios</field>
+        <!-- Hacer que el grupo Administrador de Proyectos de Odoo herede Administrador (Redes) -->
+        <record id="project.group_project_manager" model="res.groups">
+            <field name="implied_ids" eval="[(4, ref('group_redes_admin'))]"/>
+        </record>
+
+        <!-- Regla de acceso para Proyectos de Redes: Administrador ve los proyectos de Redes -->
+        <record id="project_project_redes_admin_rule" model="ir.rule">
+            <field name="name">Proyectos de Redes: acceso Administrador</field>
             <field name="model_id" ref="project.model_project_project"/>
             <field name="domain_force">[(1, '=', 1)]</field>
-            <field name="groups" eval="[(4, ref('group_redes_user')), (4, ref('group_redes_admin')), (4, ref('group_redes_designer'))]"/>
+            <field name="groups" eval="[(4, ref('group_redes_admin'))]"/>
+        </record>
+
+        <!-- Regla de acceso para Tareas de Redes: Diseñador sólo ve las tareas asignadas a su usuario -->
+        <record id="project_task_redes_designer_rule" model="ir.rule">
+            <field name="name">Tareas de Redes: acceso Diseñador asignado</field>
+            <field name="model_id" ref="project.model_project_task"/>
+            <field name="domain_force">['|', ('user_ids', 'in', [user.id]), ('user_id', '=', user.id)]</field>
+            <field name="groups" eval="[(4, ref('group_redes_designer'))]"/>
+        </record>
+
+        <record id="project_task_redes_admin_rule" model="ir.rule">
+            <field name="name">Tareas de Redes: acceso Administrador global</field>
+            <field name="model_id" ref="project.model_project_task"/>
+            <field name="domain_force">[(1, '=', 1)]</field>
+            <field name="groups" eval="[(4, ref('group_redes_admin'))]"/>
         </record>
 
         <!-- Regla para Diseños Simplificados: Accesibles para Diseñador (Redes) y Administrador (Redes) -->
