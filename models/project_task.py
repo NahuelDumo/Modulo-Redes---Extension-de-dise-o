@@ -38,6 +38,22 @@ class ProjectTask(models.Model):
         for task in self:
             task.es_diseno_simplificado = bool(task.design_id and task.design_id.es_diseno_simplificado) or (task.tipo_tarea_redes == 'diseno_simplificado')
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super(ProjectTask, self).create(vals_list)
+        for record in records:
+            if record.design_id and record.design_id.task_id != record:
+                record.design_id.task_id = record.id
+        return records
+
+    def write(self, vals):
+        res = super(ProjectTask, self).write(vals)
+        if 'design_id' in vals:
+            for record in self:
+                if record.design_id and record.design_id.task_id != record:
+                    record.design_id.task_id = record.id
+        return res
+
     def action_open_associated_design(self):
         """Abre la vista formulario del diseño simplificado asociado"""
         self.ensure_one()
