@@ -11,6 +11,10 @@ class RedesPlanTemplate(models.Model):
                                     help="Cantidad de meses que durará el contrato")
     publis_por_mes = fields.Integer(string='Publicaciones por Mes', default=8, required=True,
                                     help="Cantidad de publicaciones acordadas por mes")
+    publis_por_semana = fields.Integer(string='Publicaciones por Semana', default=2,
+                                       help="Cantidad de publicaciones semanales pactadas")
+    incluye_campana_paga = fields.Boolean(string='¿Incluye Campaña de Ads Paga?', default=False,
+                                          help="Indica si incluye pauta publicitaria paga")
     dias_anticipacion_diseno = fields.Integer(string='Días de Anticipación para Diseño', default=5,
                                              help="Días antes de la fecha de publicación en que debe entregarse el diseño")
     redes_sociales = fields.Char(string='Redes Sociales', default='Instagram, Facebook',

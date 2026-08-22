@@ -36,16 +36,20 @@ class SaleOrder(models.Model):
         """
         Al confirmar el presupuesto de venta (Sale Order):
         Si incluye un servicio de Redes Sociales (Categoría 'Redes' o productos 'RRSS'),
-        crea/configura automáticamente el Proyecto de Redes y genera las 11 tareas.
+        crea/configura automáticamente el Proyecto de Redes con sus etapas y tareas iniciales,
+        y redirige al usuario a la pantalla de parámetros del proyecto.
         """
         res = super(SaleOrder, self).action_confirm()
+        action_redirect = False
         for order in self:
             if order.has_redes_service and not order.redes_project_id:
-                order._crear_proyecto_redes_desde_presupuesto()
+                action_redirect = order._crear_proyecto_redes_desde_presupuesto()
+        if action_redirect:
+            return action_redirect
         return res
 
     def _crear_proyecto_redes_desde_presupuesto(self):
-        """Crea el proyecto de Redes vinculado al Presupuesto y genera sus 11 tareas"""
+        """Crea el proyecto de Redes vinculado al Presupuesto, inicializa etapas/tareas únicas y abre la pantalla"""
         self.ensure_one()
         duracion_meses = 1
         product_name = ""
@@ -75,7 +79,7 @@ class SaleOrder(models.Model):
                     if current_dur > max_duration:
                         max_duration = current_dur
 
-        duracion_meses = max_duration if max_duration > 0 else 1
+        duracion_meses = max_duration if max_duration > 0 else 6
 
         project_vals = {
             'name': f"{product_name or 'Redes Sociales'} - {self.partner_id.name} ({self.name})",
@@ -84,6 +88,7 @@ class SaleOrder(models.Model):
             'is_redes_project': True,
             'duracion_meses': duracion_meses,
             'publis_por_mes': 8,
+            'publis_por_semana': 2,
             'fecha_inicio_redes': fields.Date.today(),
             'description': f"Proyecto creado automáticamente desde el Presupuesto Aprobado {self.name}."
         }
@@ -91,9 +96,21 @@ class SaleOrder(models.Model):
         new_project = self.env['project.project'].create(project_vals)
         self.redes_project_id = new_project.id
 
-        # Generar automáticamente las 11 tareas del contrato
-        new_project.action_generar_tareas_redes()
+        # Crear etapas oficiales y tareas de única vez (Recepción, Configuración, Cierre, Deuda)
+        stages_dict = new_project._obtener_o_crear_etapas_redes()
+        new_project._generar_tareas_unicas(stages_dict, new_project.fecha_inicio_redes or fields.Date.today())
+
         _logger.info(f"Proyecto de Redes {new_project.name} (Duración: {duracion_meses} meses) creado desde Presupuesto {self.name}.")
+
+        # Abrir directamente el formulario del proyecto en su configuración
+        return {
+            'name': _('Parámetros de Proyecto de Redes'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'project.project',
+            'res_id': new_project.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }
 
     def action_view_redes_project(self):
         """Acción de botón inteligente para ver el proyecto de redes vinculado"""

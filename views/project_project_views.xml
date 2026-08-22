@@ -11,17 +11,25 @@
                     <field name="is_redes_project" invisible="1"/>
                     <field name="tareas_redes_generadas" invisible="1"/>
                     <field name="ultimo_mes_generado" invisible="1"/>
+                    <field name="ultima_semana_generada" invisible="1"/>
                     <field name="duracion_meses" invisible="1"/>
                     
                     <button name="action_generar_tareas_redes"
-                            string="🚀 Generar Tareas Mes 1"
+                            string="🚀 Generar Mes 1"
                             type="object"
                             class="btn-primary"
                             groups="group_redes_admin"
                             attrs="{'invisible': ['|', ('is_redes_project', '=', False), ('tareas_redes_generadas', '=', True)]}"/>
 
+                    <button name="action_generar_proxima_semana"
+                            string="⚡ Generar Próxima Semana"
+                            type="object"
+                            class="btn-info"
+                            groups="group_redes_admin"
+                            attrs="{'invisible': [('is_redes_project', '=', False)]}"/>
+
                     <button name="action_generar_proximo_mes"
-                            string="▶️ Generar Tareas Próximo Mes"
+                            string="📅 Generar Próximo Mes"
                             type="object"
                             class="btn-success"
                             groups="group_redes_admin"
@@ -38,7 +46,7 @@
 
                 <xpath expr="//sheet" position="before">
                     <div class="alert alert-info" role="alert" attrs="{'invisible': [('is_redes_project', '=', False)]}">
-                        📌 <strong>Proyecto de Redes Sociales Activo</strong>: Se generan las tareas ordenadas mes a mes. Tareas actuales del <strong>Mes <field name="ultimo_mes_generado" readonly="1"/> de <field name="duracion_meses" readonly="1"/></strong>.
+                        📌 <strong>Proyecto de Redes Sociales Activo</strong>: Tareas del <strong>Mes <field name="ultimo_mes_generado" readonly="1"/> de <field name="duracion_meses" readonly="1"/></strong> (Semana activa: <strong><field name="ultima_semana_generada" readonly="1"/></strong>).
                     </div>
                 </xpath>
 
@@ -50,11 +58,14 @@
                                 <field name="is_redes_project"/>
                                 <field name="redes_plan_id" options="{'no_create': True}"/>
                                 <field name="duracion_meses"/>
+                                <field name="publis_por_semana"/>
                                 <field name="publis_por_mes"/>
+                                <field name="incluye_campana_paga"/>
                                 <field name="dias_anticipacion_diseno"/>
                                 <field name="redes_sociales"/>
                                 <field name="fecha_inicio_redes"/>
                                 <field name="ultimo_mes_generado" readonly="1"/>
+                                <field name="ultima_semana_generada" readonly="1"/>
                                 <field name="tareas_redes_generadas" readonly="1"/>
                             </group>
                             <group string="Responsables de Proceso">

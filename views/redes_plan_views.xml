@@ -16,7 +16,9 @@
                         <group>
                             <group string="Configuración de Contrato">
                                 <field name="duracion_meses"/>
+                                <field name="publis_por_semana"/>
                                 <field name="publis_por_mes"/>
+                                <field name="incluye_campana_paga"/>
                                 <field name="dias_anticipacion_diseno"/>
                                 <field name="redes_sociales"/>
                                 <field name="active"/>
@@ -40,7 +42,9 @@
                 <tree string="Plantillas de Planes de Redes" create="true">
                     <field name="name"/>
                     <field name="duracion_meses"/>
+                    <field name="publis_por_semana"/>
                     <field name="publis_por_mes"/>
+                    <field name="incluye_campana_paga"/>
                     <field name="dias_anticipacion_diseno"/>
                     <field name="redes_sociales"/>
                 </tree>
