@@ -35,12 +35,12 @@
                             groups="project.group_project_manager"
                             attrs="{'invisible': ['|', '|', ('is_redes_project', '=', False), ('tareas_redes_generadas', '=', False), ('ultimo_mes_generado', '>=', 'duracion_meses')]}"/>
 
-                    <button name="action_generar_tareas_redes"
+                    <button name="action_regenerar_mes_1"
                             string="🔄 Regenerar Mes 1"
                             type="object"
                             class="btn-secondary"
                             groups="project.group_project_manager"
-                            confirm="¿Deseas regenerar las tareas del Mes 1?"
+                            confirm="¿Deseas regenerar el Mes 1? Se limpiarán las tareas de redes anteriores para evitar duplicados."
                             attrs="{'invisible': ['|', ('is_redes_project', '=', False), ('tareas_redes_generadas', '=', False)]}"/>
                 </xpath>
 

@@ -48,6 +48,17 @@ class SaleOrder(models.Model):
             return action_redirect
         return res
 
+    def _create_invoices(self, grouped=False, final=False, date=None):
+        """
+        Al crear la factura desde el presupuesto de venta:
+        Si incluye un servicio de Redes Sociales y aún no tiene proyecto, asegura su creación.
+        """
+        moves = super(SaleOrder, self)._create_invoices(grouped=grouped, final=final, date=date)
+        for order in self:
+            if order.has_redes_service and not order.redes_project_id:
+                order._crear_proyecto_redes_desde_presupuesto()
+        return moves
+
     def _crear_proyecto_redes_desde_presupuesto(self):
         """Crea el proyecto de Redes vinculado al Presupuesto, inicializa etapas/tareas únicas y abre la pantalla"""
         self.ensure_one()

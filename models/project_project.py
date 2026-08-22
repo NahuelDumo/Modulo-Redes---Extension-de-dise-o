@@ -46,6 +46,24 @@ class ProjectProject(models.Model):
         default=False,
         help="Indica si este proyecto es de Gestión de Redes Sociales"
     )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        projects = super(ProjectProject, self).create(vals_list)
+        for project in projects:
+            p_name = (project.name or '').lower()
+            es_de_redes = (
+                project.is_redes_project or
+                (project.sale_order_id and getattr(project.sale_order_id, 'has_redes_service', False)) or
+                ('redes' in p_name or 'rrss' in p_name)
+            )
+            if es_de_redes:
+                if not project.is_redes_project:
+                    project.is_redes_project = True
+                if not project.tareas_unicas_generadas:
+                    stages_dict = project._obtener_o_crear_etapas_redes()
+                    project._generar_tareas_unicas(stages_dict, project.fecha_inicio_redes or fields.Date.today())
+        return projects
     redes_plan_id = fields.Many2one(
         'redes.plan.template',
         string='Plan de Redes Contratado'
@@ -175,7 +193,7 @@ class ProjectProject(models.Model):
         return stages_dict
 
     def _create_redes_task(self, vals, stage_id=None):
-        """Helper para crear tareas de redes con asignación y etapa correspondientes"""
+        """Helper para crear o actualizar tareas de redes evitando duplicados por nombre"""
         Task = self.env['project.task'].with_context(mail_create_nolog=True, mail_create_nosubscribe=True, tracking_disable=True)
         if stage_id:
             vals['stage_id'] = stage_id.id if hasattr(stage_id, 'id') else stage_id
@@ -185,6 +203,15 @@ class ProjectProject(models.Model):
                 vals['user_ids'] = [(6, 0, [user_id])]
             elif 'user_id' in Task._fields:
                 vals['user_id'] = user_id
+
+        # Evitar duplicados: Si ya existe una tarea con este nombre en el proyecto, actualizarla
+        t_name = vals.get('name')
+        if t_name and self.id:
+            tarea_existente = self.task_ids.filtered(lambda t: t.name == t_name)
+            if tarea_existente:
+                tarea_existente.write(vals)
+                return tarea_existente[0]
+
         return Task.create(vals)
 
     def _get_nombre_mes(self, fecha):
@@ -283,6 +310,30 @@ class ProjectProject(models.Model):
 
     def action_generar_tareas_redes(self):
         """Genera las etapas, las tareas únicas y el Mes 1 con sus publicaciones"""
+        return self.generar_mes_redes(mes_idx=1)
+
+    def action_regenerar_mes_1(self):
+        """
+        Regenera limpiamente el Mes 1 eliminando tareas y diseños previos del proyecto
+        para limpiar cualquier duplicado previo.
+        """
+        self.ensure_one()
+        _logger.info(f"Regenerando limpiamente Mes 1 para el proyecto {self.name}")
+
+        # Tareas de redes anteriores en este proyecto
+        tareas_redes = self.task_ids.filtered(lambda t: t.es_tarea_redes or t.tipo_tarea_redes or t.design_id)
+        disenos_a_borrar = tareas_redes.mapped('design_id')
+
+        # Eliminar tareas duplicadas/viejas
+        tareas_redes.unlink()
+        if disenos_a_borrar:
+            disenos_a_borrar.filtered(lambda d: d.state in ['borrador', 'validacion', 'cliente', 'correcciones_solicitadas']).unlink()
+
+        self.tareas_unicas_generadas = False
+        self.tareas_redes_generadas = False
+        self.ultimo_mes_generado = 0
+        self.ultima_semana_generada = 0
+
         return self.generar_mes_redes(mes_idx=1)
 
     def action_generar_proximo_mes(self):
