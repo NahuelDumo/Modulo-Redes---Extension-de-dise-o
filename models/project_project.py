@@ -140,23 +140,44 @@ class ProjectProject(models.Model):
     @api.model
     def _cron_actualizar_etapas_mensuales_redes(self):
         """
-        Cron automatizado diario: Revisa los proyectos de redes activos y los mueve
-        automáticamente a la etapa del mes actual a medida que avanza el calendario.
+        Cron automatizado diario:
+        1. Revisa los proyectos de redes activos y los mueve automáticamente a la etapa del mes actual.
+        2. Genera progresivamente las semanas de publicaciones a medida que avanza el calendario (Semana 1 -> 2 -> 3 -> 4).
         """
-        _logger.info("Ejecutando cron para actualizar etapas de meses en Proyectos de Redes...")
-        etapa_mes_actual = self._obtener_etapa_mes_proyecto(fields.Date.today())
-        if not etapa_mes_actual:
-            _logger.info("No se encontró etapa de proyecto correspondiente al mes actual.")
-            return
+        _logger.info("Ejecutando cron para actualizar etapas y avance semanal de Proyectos de Redes...")
+        today = fields.Date.today()
+        etapa_mes_actual = self._obtener_etapa_mes_proyecto(today)
 
         proyectos_redes = self.search([
             ('is_redes_project', '=', True),
             ('active', '=', True)
         ])
         for project in proyectos_redes:
-            if project.stage_id != etapa_mes_actual:
+            # 1. Actualizar etapa del mes si cambió
+            if etapa_mes_actual and project.stage_id != etapa_mes_actual:
                 project.write({'stage_id': etapa_mes_actual.id})
                 _logger.info(f"Proyecto {project.name} movido automáticamente a la etapa de mes '{etapa_mes_actual.name}'.")
+
+            # 2. Avance progresivo de semanas según fecha
+            if project.fecha_inicio_redes:
+                dias_transcurridos = (today - project.fecha_inicio_redes).days
+                semana_actual = max(1, (dias_transcurridos // 7) + 1)
+                max_semanas = (project.duracion_meses or 6) * 4
+                semana_objetivo = min(semana_actual, max_semanas)
+
+                while (project.ultima_semana_generada or 0) < semana_objetivo:
+                    siguiente_semana = (project.ultima_semana_generada or 0) + 1
+                    mes_perteneciente = ((siguiente_semana - 1) // 4) + 1
+                    fecha_semana = project.fecha_inicio_redes + timedelta(days=(siguiente_semana - 1) * 7)
+                    nombre_mes = project._get_nombre_mes(fecha_semana)
+                    stages_dict = project._obtener_o_crear_etapas_redes()
+
+                    if mes_perteneciente > (project.ultimo_mes_generado or 0):
+                        project.generar_mes_redes(mes_idx=mes_perteneciente)
+                    else:
+                        project._generar_semana_publicaciones(stages_dict, siguiente_semana, mes_perteneciente, fecha_semana, nombre_mes)
+                        project.ultima_semana_generada = siguiente_semana
+                    _logger.info(f"Cron generó automáticamente la Semana {siguiente_semana} para el proyecto {project.name}.")
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -554,22 +575,36 @@ class ProjectProject(models.Model):
 
         # 3. Publicación de campaña paga (con nombre y cantidad de publis pagas, solo si está seleccionado)
         if self.incluye_campana_paga:
-            cant_pagas = self.cant_publis_pagas or 1
-            self._create_redes_task({
-                'name': f'Publicación de campaña paga ({cant_pagas} publis pagas - {red_nombre} - Sem {semana_global} {nombre_mes})',
-                'project_id': self.id,
-                'user_id': self.user_abril_id.id if self.user_abril_id else None,
-                'date_deadline': fecha_semana + timedelta(days=4),
-                'es_tarea_redes': True,
-                'tipo_tarea_redes': 'campana_paga',
-                'red_social': red_nombre,
-                'description': f'Configuración y activación de pauta / campaña paga ({cant_pagas} publicaciones pagas contratadas) para la Semana {semana_global}.'
-            }, stage_id=st_semanal)
+            cant_pagas_mes = self.cant_publis_pagas or 1
+            semana_del_mes = ((semana_global - 1) % 4) + 1
+
+            generar_esta_semana = False
+            if cant_pagas_mes == 1 and semana_del_mes == 1:
+                generar_esta_semana = True
+            elif cant_pagas_mes == 2 and semana_del_mes in [1, 3]:
+                generar_esta_semana = True
+            elif cant_pagas_mes == 3 and semana_del_mes in [1, 2, 3]:
+                generar_esta_semana = True
+            elif cant_pagas_mes >= 4:
+                generar_esta_semana = True
+
+            if generar_esta_semana:
+                self._create_redes_task({
+                    'name': f'Publicación de campaña paga ({cant_pagas_mes} publis pagas contratadas - {red_nombre} - Sem {semana_global} {nombre_mes})',
+                    'project_id': self.id,
+                    'user_id': self.user_abril_id.id if self.user_abril_id else None,
+                    'date_deadline': fecha_semana + timedelta(days=4),
+                    'es_tarea_redes': True,
+                    'tipo_tarea_redes': 'campana_paga',
+                    'red_social': red_nombre,
+                    'description': f'Configuración y activación de pauta / campaña paga ({cant_pagas_mes} publicaciones pagas en el mes) para la Semana {semana_global}.'
+                }, stage_id=st_semanal)
 
     def generar_mes_redes(self, mes_idx=1):
         """
         Genera limpiamente las etapas oficiales, tareas de única vez (si es Mes 1)
-        y las tareas de Gestión Mensual, Administración - mensual y las 4 semanas del mes en curso.
+        y las tareas de Gestión Mensual, Administración - mensual y la PRIMERA SEMANA activa del mes.
+        Las siguientes semanas se van generando progresivamente a medida que transcurre el calendario.
         """
         self.ensure_one()
         if not self.duracion_meses or self.duracion_meses <= 0:
@@ -625,22 +660,20 @@ class ProjectProject(models.Model):
                 'description': f'Administración mensual correspondiente a {nombre_mes}.'
             }, stage_id=st_admin_mensual)
 
-        # 4. Generar las 4 semanas del mes en 'Gestión Semanal de Publicaciones'
-        for sem in range(1, 5):
-            semana_global = ((mes_idx - 1) * 4) + sem
-            fecha_semana = fecha_inicio_mes + timedelta(days=(sem - 1) * 7)
-            self._generar_semana_publicaciones(stages_dict, semana_global, mes_idx, fecha_semana, nombre_mes)
+        # 4. Generar ÚNICAMENTE la Semana 1 activa del mes en 'Gestión Semanal de Publicaciones'
+        semana_1_global = ((mes_idx - 1) * 4) + 1
+        self._generar_semana_publicaciones(stages_dict, semana_1_global, mes_idx, fecha_inicio_mes, nombre_mes)
 
         self.tareas_redes_generadas = True
         self.ultimo_mes_generado = mes_idx
-        self.ultima_semana_generada = mes_idx * 4
+        self.ultima_semana_generada = semana_1_global
 
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
-                'title': _(f'Mes {mes_idx} ({nombre_mes}) Generado'),
-                'message': _(f'Se generaron las tareas del Mes {mes_idx} con sus etapas y publicaciones en la plantilla de Redes.'),
+                'title': _(f'Mes {mes_idx} ({nombre_mes}) - Semana {semana_1_global} Generada'),
+                'message': _(f'Se generaron las tareas del Mes {mes_idx} y las publicaciones de la Semana {semana_1_global}. Las siguientes semanas se cargarán progresivamente.'),
                 'type': 'success',
                 'sticky': False,
             }
