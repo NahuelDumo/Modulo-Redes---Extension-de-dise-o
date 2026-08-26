@@ -92,6 +92,9 @@ class SaleOrder(models.Model):
 
         duracion_meses = max_duration if max_duration > 0 else 6
 
+        start_date = fields.Date.today()
+        etapa_mes = self.env['project.project']._obtener_etapa_mes_proyecto(start_date)
+
         project_vals = {
             'name': f"{product_name or 'Redes Sociales'} - {self.partner_id.name} ({self.name})",
             'partner_id': self.partner_id.id,
@@ -100,18 +103,15 @@ class SaleOrder(models.Model):
             'duracion_meses': duracion_meses,
             'publis_por_mes': 8,
             'publis_por_semana': 2,
-            'fecha_inicio_redes': fields.Date.today(),
+            'fecha_inicio_redes': start_date,
+            'stage_id': etapa_mes.id if etapa_mes else False,
             'description': f"Proyecto creado automáticamente desde el Presupuesto Aprobado {self.name}."
         }
 
         new_project = self.env['project.project'].create(project_vals)
         self.redes_project_id = new_project.id
 
-        # Crear etapas oficiales y tareas de única vez (Recepción, Configuración, Cierre, Deuda)
-        stages_dict = new_project._obtener_o_crear_etapas_redes()
-        new_project._generar_tareas_unicas(stages_dict, new_project.fecha_inicio_redes or fields.Date.today())
-
-        _logger.info(f"Proyecto de Redes {new_project.name} (Duración: {duracion_meses} meses) creado desde Presupuesto {self.name}.")
+        _logger.info(f"Proyecto de Redes {new_project.name} (Duración: {duracion_meses} meses) creado desde Presupuesto {self.name} en etapa {etapa_mes.name if etapa_mes else 'Inicial'}.")
 
         # Abrir directamente el formulario del proyecto en su configuración
         return {

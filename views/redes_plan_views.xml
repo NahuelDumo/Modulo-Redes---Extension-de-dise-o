@@ -19,6 +19,7 @@
                                 <field name="publis_por_semana"/>
                                 <field name="publis_por_mes"/>
                                 <field name="incluye_campana_paga"/>
+                                <field name="cant_publis_pagas" attrs="{'invisible': [('incluye_campana_paga', '=', False)]}"/>
                                 <field name="dias_anticipacion_diseno"/>
                                 <field name="redes_sociales"/>
                                 <field name="active"/>
@@ -45,6 +46,7 @@
                     <field name="publis_por_semana"/>
                     <field name="publis_por_mes"/>
                     <field name="incluye_campana_paga"/>
+                    <field name="cant_publis_pagas"/>
                     <field name="dias_anticipacion_diseno"/>
                     <field name="redes_sociales"/>
                 </tree>

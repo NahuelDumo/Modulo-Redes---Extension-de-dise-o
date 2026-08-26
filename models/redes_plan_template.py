@@ -15,6 +15,8 @@ class RedesPlanTemplate(models.Model):
                                        help="Cantidad de publicaciones semanales pactadas")
     incluye_campana_paga = fields.Boolean(string='¿Incluye Campaña de Ads Paga?', default=False,
                                           help="Indica si incluye pauta publicitaria paga")
+    cant_publis_pagas = fields.Integer(string='Cantidad de Publicaciones Pagas (Mes)', default=1,
+                                       help="Cantidad de publicaciones o campañas con pauta publicitaria paga en el mes")
     dias_anticipacion_diseno = fields.Integer(string='Días de Anticipación para Diseño', default=5,
                                              help="Días antes de la fecha de publicación en que debe entregarse el diseño")
     redes_sociales = fields.Char(string='Redes Sociales', default='Instagram, Facebook',

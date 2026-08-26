@@ -47,23 +47,6 @@ class ProjectProject(models.Model):
         help="Indica si este proyecto es de Gestión de Redes Sociales"
     )
 
-    @api.model_create_multi
-    def create(self, vals_list):
-        projects = super(ProjectProject, self).create(vals_list)
-        for project in projects:
-            p_name = (project.name or '').lower()
-            es_de_redes = (
-                project.is_redes_project or
-                (project.sale_order_id and getattr(project.sale_order_id, 'has_redes_service', False)) or
-                ('redes' in p_name or 'rrss' in p_name)
-            )
-            if es_de_redes:
-                if not project.is_redes_project:
-                    project.is_redes_project = True
-                if not project.tareas_unicas_generadas:
-                    stages_dict = project._obtener_o_crear_etapas_redes()
-                    project._generar_tareas_unicas(stages_dict, project.fecha_inicio_redes or fields.Date.today())
-        return projects
     redes_plan_id = fields.Many2one(
         'redes.plan.template',
         string='Plan de Redes Contratado'
@@ -87,6 +70,11 @@ class ProjectProject(models.Model):
         string='¿Incluye Campaña de Ads Paga?',
         default=False,
         help="Indica si se deben generar tareas de campañas de publicidad paga (Ads)"
+    )
+    cant_publis_pagas = fields.Integer(
+        string='Cantidad de Publicaciones Pagas (Mes)',
+        default=1,
+        help="Cantidad de publicaciones o campañas con pauta publicitaria paga en el mes"
     )
     dias_anticipacion_diseno = fields.Integer(
         string='Días de Anticipación para Diseño',
@@ -128,6 +116,88 @@ class ProjectProject(models.Model):
         copy=False
     )
 
+    @api.model
+    def _obtener_etapa_mes_proyecto(self, fecha=None):
+        """
+        Obtiene el registro de la etapa de proyecto (project.project.stage)
+        correspondiente al mes de la fecha indicada (ej. 'Agosto').
+        """
+        if 'project.project.stage' not in self.env:
+            return False
+        if not fecha:
+            fecha = fields.Date.today()
+        mes_num = fecha.month if hasattr(fecha, 'month') else datetime.strptime(str(fecha), '%Y-%m-%d').month
+        mes_nombre = MESES_ESP.get(mes_num, '')
+        if not mes_nombre:
+            return False
+
+        Stage = self.env['project.project.stage']
+        stage = Stage.search([('name', '=ilike', mes_nombre)], limit=1)
+        if not stage:
+            stage = Stage.search([('name', 'ilike', mes_nombre)], limit=1)
+        return stage
+
+    @api.model
+    def _cron_actualizar_etapas_mensuales_redes(self):
+        """
+        Cron automatizado diario: Revisa los proyectos de redes activos y los mueve
+        automáticamente a la etapa del mes actual a medida que avanza el calendario.
+        """
+        _logger.info("Ejecutando cron para actualizar etapas de meses en Proyectos de Redes...")
+        etapa_mes_actual = self._obtener_etapa_mes_proyecto(fields.Date.today())
+        if not etapa_mes_actual:
+            _logger.info("No se encontró etapa de proyecto correspondiente al mes actual.")
+            return
+
+        proyectos_redes = self.search([
+            ('is_redes_project', '=', True),
+            ('active', '=', True)
+        ])
+        for project in proyectos_redes:
+            if project.stage_id != etapa_mes_actual:
+                project.write({'stage_id': etapa_mes_actual.id})
+                _logger.info(f"Proyecto {project.name} movido automáticamente a la etapa de mes '{etapa_mes_actual.name}'.")
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        for vals in vals_list:
+            p_name = (vals.get('name') or '').lower()
+            es_de_redes = (
+                vals.get('is_redes_project') or
+                ('redes' in p_name or 'rrss' in p_name)
+            )
+            if es_de_redes:
+                vals['is_redes_project'] = True
+                if not vals.get('stage_id'):
+                    fecha_ref = vals.get('fecha_inicio_redes') or fields.Date.today()
+                    etapa_mes = self._obtener_etapa_mes_proyecto(fecha_ref)
+                    if etapa_mes:
+                        vals['stage_id'] = etapa_mes.id
+
+        projects = super(ProjectProject, self).create(vals_list)
+
+        for project in projects:
+            p_name = (project.name or '').lower()
+            es_de_redes = (
+                project.is_redes_project or
+                (project.sale_order_id and getattr(project.sale_order_id, 'has_redes_service', False)) or
+                ('redes' in p_name or 'rrss' in p_name)
+            )
+            if es_de_redes:
+                if not project.is_redes_project:
+                    project.is_redes_project = True
+                
+                if hasattr(project, 'stage_id') and (not project.stage_id or (project.stage_id.name or '').lower() == 'plantilla'):
+                    etapa_mes = self._obtener_etapa_mes_proyecto(project.fecha_inicio_redes or fields.Date.today())
+                    if etapa_mes:
+                        project.stage_id = etapa_mes.id
+
+                if not project.tareas_unicas_generadas:
+                    stages_dict = project._obtener_o_crear_etapas_redes()
+                    project._generar_tareas_unicas(stages_dict, project.fecha_inicio_redes or fields.Date.today())
+
+        return projects
+
     @api.onchange('publis_por_semana')
     def _onchange_publis_por_semana(self):
         if self.publis_por_semana:
@@ -146,6 +216,7 @@ class ProjectProject(models.Model):
             self.publis_por_mes = self.redes_plan_id.publis_por_mes
             self.publis_por_semana = getattr(self.redes_plan_id, 'publis_por_semana', 2) or max(1, self.publis_por_mes // 4)
             self.incluye_campana_paga = getattr(self.redes_plan_id, 'incluye_campana_paga', False)
+            self.cant_publis_pagas = getattr(self.redes_plan_id, 'cant_publis_pagas', 1)
             self.dias_anticipacion_diseno = self.redes_plan_id.dias_anticipacion_diseno
             self.redes_sociales = self.redes_plan_id.redes_sociales
             if self.redes_plan_id.user_abril_id:
@@ -157,7 +228,7 @@ class ProjectProject(models.Model):
 
     def _obtener_o_crear_etapas_redes(self):
         """
-        Asegura que existan las 7 etapas Kanban oficiales de la plantilla en el proyecto:
+        Asegura que existan ÚNICA Y EXCLUSIVAMENTE las 7 etapas Kanban oficiales de la plantilla:
         1. Administración - Recepción
         2. Configuración General
         3. Gestión Mensual
@@ -165,6 +236,7 @@ class ProjectProject(models.Model):
         5. Administración - mensual
         6. Administración - cierre
         7. Gestión de Deuda
+        Limpia cualquier columna duplicada o huérfana en el proyecto.
         """
         TaskStage = self.env['project.task.type']
         
@@ -179,21 +251,24 @@ class ProjectProject(models.Model):
         ]
         
         stages_dict = {}
+        official_stage_ids = []
         for name, seq in stages_data:
-            stage = TaskStage.search([('name', '=', name)], limit=1)
+            stage = TaskStage.search([('name', '=', name)], order='id asc', limit=1)
             if not stage:
                 stage = TaskStage.create({'name': name, 'sequence': seq})
             elif stage.sequence != seq:
                 stage.write({'sequence': seq})
                 
-            if self.id not in stage.project_ids.ids:
-                stage.write({'project_ids': [(4, self.id)]})
             stages_dict[name] = stage
+            official_stage_ids.append(stage.id)
+
+        # Establecer las etapas exactas en el proyecto eliminando duplicados
+        self.write({'type_ids': [(6, 0, official_stage_ids)]})
 
         return stages_dict
 
     def _create_redes_task(self, vals, stage_id=None):
-        """Helper para crear o actualizar tareas de redes evitando duplicados por nombre"""
+        """Helper para crear o actualizar tareas de redes evitando duplicados por nombre y jerarquía"""
         Task = self.env['project.task'].with_context(mail_create_nolog=True, mail_create_nosubscribe=True, tracking_disable=True)
         if stage_id:
             vals['stage_id'] = stage_id.id if hasattr(stage_id, 'id') else stage_id
@@ -204,10 +279,13 @@ class ProjectProject(models.Model):
             elif 'user_id' in Task._fields:
                 vals['user_id'] = user_id
 
-        # Evitar duplicados: Si ya existe una tarea con este nombre en el proyecto, actualizarla
+        # Evitar duplicados: Si ya existe una tarea con este nombre y mismo parent en el proyecto, actualizarla
         t_name = vals.get('name')
+        t_parent = vals.get('parent_id')
         if t_name and self.id:
-            tarea_existente = self.task_ids.filtered(lambda t: t.name == t_name)
+            tarea_existente = self.task_ids.filtered(
+                lambda t: t.name == t_name and (t.parent_id.id if t.parent_id else False) == (t_parent if t_parent else False)
+            )
             if tarea_existente:
                 tarea_existente.write(vals)
                 return tarea_existente[0]
@@ -366,20 +444,104 @@ class ProjectProject(models.Model):
             'tag': 'display_notification',
             'params': {
                 'title': _(f'Semana {siguiente_semana} Generada'),
-                'message': _(f'Se generaron las tareas de publicaciones para la Semana {siguiente_semana} ({nombre_mes}).'),
+                'message': _(f'Se generaron las publicaciones y verificación de la Semana {siguiente_semana} ({nombre_mes}).'),
                 'type': 'success',
                 'sticky': False,
             }
         }
 
     def _generar_semana_publicaciones(self, stages_dict, semana_global, mes_idx, fecha_semana, nombre_mes):
-        """Genera las tareas y diseños simplificados de una semana en 'Gestión Semanal de Publicaciones'"""
+        """
+        Genera la estructura semanal en 'Gestión Semanal de Publicaciones':
+        - 1 Grupo (Tarea Padre) por cada publicación y red social, con sus 4 subtareas adentro:
+          1. Redacción de Copys
+          2. Diseño Simplificado (con diseño asociado)
+          3. Revisión y Aprobación
+          4. Publicación y Programación
+        - 1 Tarea a la semana de 'Verificación Semanal Publicaciones'
+        - Publicación de campaña paga (con cantidad de publis pagas) solo si está seleccionado
+        """
         Design = self.env['design.design'].with_context(mail_create_nolog=True, mail_create_nosubscribe=True, tracking_disable=True)
         st_semanal = stages_dict.get('Gestión Semanal de Publicaciones')
         cant_publis = self.publis_por_semana or max(1, (self.publis_por_mes or 8) // 4)
         red_nombre = self.redes_sociales or 'Meta'
 
-        # 1. Verificación Semanal Publicaciones
+        # 1. Armado de cada publicación: 1 GRUPO (Tarea Padre) por cada publicación y red social
+        for p in range(1, cant_publis + 1):
+            fecha_publi = fecha_semana + timedelta(days=min(6, (p - 1) * max(1, 6 // cant_publis) + 1))
+            fecha_diseno = fecha_publi - timedelta(days=self.dias_anticipacion_diseno or 5)
+
+            # Tarea Padre (El grupo visible en el tablero Kanban)
+            parent_task = self._create_redes_task({
+                'name': f'Armado de cada publicación (Publi {p} - {red_nombre} - Sem {semana_global} {nombre_mes})',
+                'project_id': self.id,
+                'user_id': self.user_abril_id.id if self.user_abril_id else None,
+                'date_deadline': fecha_publi,
+                'es_tarea_redes': True,
+                'tipo_tarea_redes': 'estrategia',
+                'description': f'Grupo de trabajo de la publicación {p} ({red_nombre}) para la Semana {semana_global} ({nombre_mes}).'
+            }, stage_id=st_semanal)
+
+            # Subtarea 1: Redacción de Copys
+            self._create_redes_task({
+                'name': f'1. Redacción de Copys (Publi {p} - {red_nombre} - Sem {semana_global} {nombre_mes})',
+                'parent_id': parent_task.id,
+                'project_id': self.id,
+                'user_id': self.user_abril_id.id if self.user_abril_id else None,
+                'date_deadline': fecha_diseno - timedelta(days=2),
+                'es_tarea_redes': True,
+                'tipo_tarea_redes': 'copys',
+                'description': f'Redacción de textos, propuesta conceptual y copy para la publicación {p}.'
+            }, stage_id=st_semanal)
+
+            # Subtarea 2: Diseño Simplificado (Con diseño vinculado para el diseñador)
+            nuevo_diseno = Design.create({
+                'name': f'Diseño Simplificado - Publi {p} Sem {semana_global} ({nombre_mes}) - {self.name}',
+                'cliente_id': self.partner_id.id if self.partner_id else self.env.user.partner_id.id,
+                'categoria_id': self.env['product.category'].search([], limit=1).id,
+                'es_diseno_simplificado': True,
+                'etapa': 'etapa1',
+                'visible_para_cliente': True
+            })
+
+            subtask_diseno = self._create_redes_task({
+                'name': f'2. Diseño Simplificado (Publi {p} - {red_nombre} - Sem {semana_global} {nombre_mes})',
+                'parent_id': parent_task.id,
+                'project_id': self.id,
+                'user_id': self.user_abril_id.id if self.user_abril_id else None,
+                'date_deadline': fecha_diseno,
+                'es_tarea_redes': True,
+                'tipo_tarea_redes': 'diseno_simplificado',
+                'design_id': nuevo_diseno.id,
+                'description': f'Elaboración del arte visual y gráfico para la publicación {p}.'
+            }, stage_id=st_semanal)
+            nuevo_diseno.task_id = subtask_diseno.id
+
+            # Subtarea 3: Revisión y Aprobación
+            self._create_redes_task({
+                'name': f'3. Revisión y Aprobación (Publi {p} - {red_nombre} - Sem {semana_global} {nombre_mes})',
+                'parent_id': parent_task.id,
+                'project_id': self.id,
+                'user_id': self.user_abril_id.id if self.user_abril_id else None,
+                'date_deadline': fecha_publi - timedelta(days=1),
+                'es_tarea_redes': True,
+                'tipo_tarea_redes': 'revision_copys',
+                'description': f'Revisión interna y validación final del arte y texto antes de la publicación.'
+            }, stage_id=st_semanal)
+
+            # Subtarea 4: Publicación y Programación
+            self._create_redes_task({
+                'name': f'4. Publicación y Programación (Publi {p} - {red_nombre} - Sem {semana_global} {nombre_mes})',
+                'parent_id': parent_task.id,
+                'project_id': self.id,
+                'user_id': self.user_abril_id.id if self.user_abril_id else None,
+                'date_deadline': fecha_publi,
+                'es_tarea_redes': True,
+                'tipo_tarea_redes': 'publicacion',
+                'description': f'Programación y publicación oficial en las redes sociales acordadas ({red_nombre}).'
+            }, stage_id=st_semanal)
+
+        # 2. UNA TAREA A LA SEMANA de Verificación Semanal Publicaciones
         self._create_redes_task({
             'name': f'Verificación Semanal Publicaciones - Sem {semana_global} ({nombre_mes})',
             'project_id': self.id,
@@ -390,44 +552,18 @@ class ProjectProject(models.Model):
             'description': f'Auditoría y verificación semanal de publicaciones programadas para la Semana {semana_global}.'
         }, stage_id=st_semanal)
 
-        # 2. Armado de cada publicación (multiplicado por cant_publis)
-        for p in range(1, cant_publis + 1):
-            fecha_publi = fecha_semana + timedelta(days=min(6, (p - 1) * max(1, 6 // cant_publis) + 1))
-            fecha_diseno = fecha_publi - timedelta(days=self.dias_anticipacion_diseno or 5)
-
-            nuevo_diseno = Design.create({
-                'name': f'Diseño Simplificado - Publi {p} Sem {semana_global} ({nombre_mes}) - {self.name}',
-                'cliente_id': self.partner_id.id if self.partner_id else self.env.user.partner_id.id,
-                'categoria_id': self.env['product.category'].search([], limit=1).id,
-                'es_diseno_simplificado': True,
-                'etapa': 'etapa1',
-                'visible_para_cliente': True
-            })
-
-            task_publi = self._create_redes_task({
-                'name': f'Armado de cada publicación (Publi {p} - {red_nombre} - Sem {semana_global} {nombre_mes})',
-                'project_id': self.id,
-                'user_id': self.user_abril_id.id if self.user_abril_id else None,
-                'date_deadline': fecha_diseno,
-                'es_tarea_redes': True,
-                'tipo_tarea_redes': 'diseno_simplificado',
-                'design_id': nuevo_diseno.id,
-                'description': f'Armado de publicación {p} de la Semana {semana_global} ({nombre_mes}). '
-                               f'Modificar el nombre con el formato específico (ej: Carrusel, Historia, Reel).'
-            }, stage_id=st_semanal)
-            nuevo_diseno.task_id = task_publi.id
-
-        # 3. Publicación de campaña paga (si está tildada la opción)
+        # 3. Publicación de campaña paga (con nombre y cantidad de publis pagas, solo si está seleccionado)
         if self.incluye_campana_paga:
+            cant_pagas = self.cant_publis_pagas or 1
             self._create_redes_task({
-                'name': f'Publicación de campaña paga (Semana {semana_global} {nombre_mes} - {red_nombre})',
+                'name': f'Publicación de campaña paga ({cant_pagas} publis pagas - {red_nombre} - Sem {semana_global} {nombre_mes})',
                 'project_id': self.id,
                 'user_id': self.user_abril_id.id if self.user_abril_id else None,
                 'date_deadline': fecha_semana + timedelta(days=4),
                 'es_tarea_redes': True,
                 'tipo_tarea_redes': 'campana_paga',
                 'red_social': red_nombre,
-                'description': f'Configuración y activación de pauta / campaña paga para la Semana {semana_global}.'
+                'description': f'Configuración y activación de pauta / campaña paga ({cant_pagas} publicaciones pagas contratadas) para la Semana {semana_global}.'
             }, stage_id=st_semanal)
 
     def generar_mes_redes(self, mes_idx=1):
@@ -450,10 +586,9 @@ class ProjectProject(models.Model):
 
         mes_offset_days = (mes_idx - 1) * 30
         fecha_inicio_mes = start_date + timedelta(days=mes_offset_days)
-        fecha_fin_mes = start_date + timedelta(days=mes_offset_days + 28)
         nombre_mes = self._get_nombre_mes(fecha_inicio_mes)
 
-        # 3. Tareas en 'Gestión Mensual'
+        # 3. Tareas en 'Gestión Mensual' (5 tareas)
         st_gestion_mensual = stages_dict.get('Gestión Mensual')
         tareas_gestion_mensual = [
             (f'Completar Calendario Mensual de Publicaciones ({nombre_mes})', 3, self.user_abril_id.id if self.user_abril_id else None, 'calendario'),
@@ -473,7 +608,7 @@ class ProjectProject(models.Model):
                 'description': f'Gestión mensual correspondiente a {nombre_mes}.'
             }, stage_id=st_gestion_mensual)
 
-        # 5. Tareas en 'Administración - mensual'
+        # 5. Tareas en 'Administración - mensual' (2 tareas)
         st_admin_mensual = stages_dict.get('Administración - mensual')
         tareas_admin_mensual = [
             (f'Cobranza de cuota mensual al cliente ({nombre_mes})', 5),

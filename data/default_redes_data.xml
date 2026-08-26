@@ -33,8 +33,21 @@
             <field name="name">Plan Estándar Redes Sociales - 8 Publis/Mes (6 Meses)</field>
             <field name="duracion_meses">6</field>
             <field name="publis_por_mes">8</field>
+            <field name="cant_publis_pagas">1</field>
             <field name="dias_anticipacion_diseno">5</field>
             <field name="redes_sociales">Instagram, Facebook, Meta Ads</field>
+        </record>
+
+        <!-- Cron de Avance Automático Mensual de Proyectos de Redes -->
+        <record id="ir_cron_actualizar_etapas_mensuales_redes" model="ir.cron">
+            <field name="name">Redes: Mover Proyectos al Mes Actual</field>
+            <field name="model_id" ref="project.model_project_project"/>
+            <field name="state">code</field>
+            <field name="code">model._cron_actualizar_etapas_mensuales_redes()</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">days</field>
+            <field name="numbercall">-1</field>
+            <field name="active">True</field>
         </record>
     </data>
 </odoo>
