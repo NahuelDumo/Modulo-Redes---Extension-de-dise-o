@@ -219,14 +219,20 @@ class ProjectProject(models.Model):
 
         return projects
 
-    def write(self, vals):
-        # Administrador (Redes) tiene escritura en project.project (ir.model.access.csv) sólo para proyectos de Redes.
-        # Va en Python y no en ir.rule porque la regla de Usuario de Proyecto se sumaría (OR) y habilitaría todos.
-        # is_favorite se ignora: Odoo lo guarda aparte y cualquier usuario puede marcar favoritos.
-        if (not self.env.su and set(vals) - {'is_favorite'}
+    def _check_redes_access(self):
+        """Administrador de Proyectos: todo. Administrador (Redes): sólo proyectos de Redes.
+        Va en Python y no en ir.rule porque la regla de Usuario de Proyecto se sumaría (OR) y habilitaría todos."""
+        self.check_access_rights('write')
+        self.check_access_rule('write')
+        if (not self.env.su
                 and not self.env.user.has_group('project.group_project_manager')
                 and not all(self.mapped('is_redes_project'))):
             raise AccessError(_("Sólo podés editar proyectos de Redes Sociales."))
+
+    def write(self, vals):
+        # is_favorite se ignora: Odoo lo guarda aparte y cualquier usuario puede marcar favoritos.
+        if set(vals) - {'is_favorite'}:
+            self._check_redes_access()
         return super().write(vals)
 
     @api.onchange('publis_por_semana')
@@ -419,7 +425,9 @@ class ProjectProject(models.Model):
 
     def action_generar_tareas_redes(self):
         """Genera las etapas, las tareas únicas y el Mes 1 con sus publicaciones"""
-        return self.generar_mes_redes(mes_idx=1)
+        # Los botones crean/borran tareas, etapas y diseños: se valida acceso al proyecto y se ejecuta con sudo
+        self._check_redes_access()
+        return self.sudo().generar_mes_redes(mes_idx=1)
 
     def action_regenerar_mes_1(self):
         """
@@ -427,6 +435,8 @@ class ProjectProject(models.Model):
         para limpiar cualquier duplicado previo.
         """
         self.ensure_one()
+        self._check_redes_access()
+        self = self.sudo()
         _logger.info(f"Regenerando limpiamente Mes 1 para el proyecto {self.name}")
 
         # Tareas de redes anteriores en este proyecto
@@ -448,6 +458,8 @@ class ProjectProject(models.Model):
     def action_generar_proximo_mes(self):
         """Genera las tareas del siguiente mes del contrato"""
         self.ensure_one()
+        self._check_redes_access()
+        self = self.sudo()
         siguiente_mes = (self.ultimo_mes_generado or 0) + 1
         if siguiente_mes > self.duracion_meses:
             raise UserError(_(f"Ya se han generado todos los {self.duracion_meses} meses de este contrato."))
@@ -456,6 +468,8 @@ class ProjectProject(models.Model):
     def action_generar_proxima_semana(self):
         """Genera las tareas de la siguiente semana de publicaciones"""
         self.ensure_one()
+        self._check_redes_access()
+        self = self.sudo()
         stages_dict = self._obtener_o_crear_etapas_redes()
         start_date = self.fecha_inicio_redes or fields.Date.today()
         
