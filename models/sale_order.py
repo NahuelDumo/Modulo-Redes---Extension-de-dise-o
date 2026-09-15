@@ -43,7 +43,7 @@ class SaleOrder(models.Model):
         action_redirect = False
         for order in self:
             if order.has_redes_service and not order.redes_project_id:
-                action_redirect = order._crear_proyecto_redes_desde_presupuesto()
+                action_redirect = order._crear_proyecto_redes_desde_presupuesto() or action_redirect
         if action_redirect:
             return action_redirect
         return res
@@ -92,8 +92,10 @@ class SaleOrder(models.Model):
 
         duracion_meses = max_duration if max_duration > 0 else 6
 
+        # sudo: el proyecto nace de la venta confirmada, aunque el vendedor no tenga permisos en Proyectos
+        Project = self.env['project.project'].sudo()
         start_date = fields.Date.today()
-        etapa_mes = self.env['project.project']._obtener_etapa_mes_proyecto(start_date)
+        etapa_mes = Project._obtener_etapa_mes_proyecto(start_date)
 
         project_vals = {
             'name': f"{product_name or 'Redes Sociales'} - {self.partner_id.name} ({self.name})",
@@ -108,10 +110,15 @@ class SaleOrder(models.Model):
             'description': f"Proyecto creado automáticamente desde el Presupuesto Aprobado {self.name}."
         }
 
-        new_project = self.env['project.project'].create(project_vals)
+        new_project = Project.create(project_vals)
         self.redes_project_id = new_project.id
 
         _logger.info(f"Proyecto de Redes {new_project.name} (Duración: {duracion_meses} meses) creado desde Presupuesto {self.name} en etapa {etapa_mes.name if etapa_mes else 'Inicial'}.")
+
+        # Sólo quien puede editar proyectos (Administrador de Redes / de Proyectos) va a la configuración;
+        # el resto se queda en el presupuesto, que muestra el botón "Proyecto Redes".
+        if not self.env['project.project'].check_access_rights('write', raise_exception=False):
+            return False
 
         # Abrir directamente el formulario del proyecto en su configuración
         return {

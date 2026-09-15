@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields, api, _
-from odoo.exceptions import UserError
+from odoo.exceptions import AccessError, UserError
 from datetime import datetime, timedelta
 import logging
 
@@ -218,6 +218,16 @@ class ProjectProject(models.Model):
                     project._generar_tareas_unicas(stages_dict, project.fecha_inicio_redes or fields.Date.today())
 
         return projects
+
+    def write(self, vals):
+        # Administrador (Redes) tiene escritura en project.project (ir.model.access.csv) sólo para proyectos de Redes.
+        # Va en Python y no en ir.rule porque la regla de Usuario de Proyecto se sumaría (OR) y habilitaría todos.
+        # is_favorite se ignora: Odoo lo guarda aparte y cualquier usuario puede marcar favoritos.
+        if (not self.env.su and set(vals) - {'is_favorite'}
+                and not self.env.user.has_group('project.group_project_manager')
+                and not all(self.mapped('is_redes_project'))):
+            raise AccessError(_("Sólo podés editar proyectos de Redes Sociales."))
+        return super().write(vals)
 
     @api.onchange('publis_por_semana')
     def _onchange_publis_por_semana(self):

@@ -49,10 +49,25 @@
 
         <!-- Reglas para Tareas de Redes (project.task) -->
         <record id="project_task_redes_admin_rule" model="ir.rule">
-            <field name="name">Tareas de Redes: acceso Administrador global</field>
+            <field name="name">Tareas de Redes: Administrador ve todas</field>
             <field name="model_id" ref="project.model_project_task"/>
             <field name="domain_force">[(1, '=', 1)]</field>
             <field name="groups" eval="[(4, ref('group_redes_admin'))]"/>
+            <field name="perm_read" eval="1"/>
+            <field name="perm_write" eval="0"/>
+            <field name="perm_create" eval="0"/>
+            <field name="perm_unlink" eval="0"/>
+        </record>
+
+        <record id="project_task_redes_admin_write_rule" model="ir.rule">
+            <field name="name">Tareas de Redes: Administrador edita sólo tareas de proyectos de Redes</field>
+            <field name="model_id" ref="project.model_project_task"/>
+            <field name="domain_force">[('project_id.is_redes_project', '=', True)]</field>
+            <field name="groups" eval="[(4, ref('group_redes_admin'))]"/>
+            <field name="perm_read" eval="0"/>
+            <field name="perm_write" eval="1"/>
+            <field name="perm_create" eval="0"/>
+            <field name="perm_unlink" eval="0"/>
         </record>
 
         <record id="project_task_redes_designer_rule" model="ir.rule">
