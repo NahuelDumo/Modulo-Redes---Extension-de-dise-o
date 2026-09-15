@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        <!-- Vista Formulario de Proyecto extendida para Redes Sociales -->
+        <!-- Vista Formulario de Proyecto extendida para Redes Sociales.
+             Botones y Solapa de Configuración sólo para Administrador (Redes) (Administrador de Proyectos lo hereda).
+             OJO: groups="" exige el nombre técnico del módulo = nombre de la carpeta en el servidor. -->
         <record id="view_project_project_form_redes" model="ir.ui.view">
             <field name="name">project.project.form.redes</field>
             <field name="model">project.project</field>
@@ -13,6 +15,35 @@
                     <field name="ultimo_mes_generado" invisible="1"/>
                     <field name="ultima_semana_generada" invisible="1"/>
                     <field name="duracion_meses" invisible="1"/>
+
+                    <button name="action_generar_tareas_redes"
+                            string="🚀 Generar Mes 1"
+                            type="object"
+                            class="btn-primary"
+                            groups="Modulo-Redes---Extension-de-dise-o.group_redes_admin"
+                            attrs="{'invisible': ['|', ('is_redes_project', '=', False), ('tareas_redes_generadas', '=', True)]}"/>
+
+                    <button name="action_generar_proxima_semana"
+                            string="⚡ Generar Próxima Semana"
+                            type="object"
+                            class="btn-info"
+                            groups="Modulo-Redes---Extension-de-dise-o.group_redes_admin"
+                            attrs="{'invisible': [('is_redes_project', '=', False)]}"/>
+
+                    <button name="action_generar_proximo_mes"
+                            string="📅 Generar Próximo Mes"
+                            type="object"
+                            class="btn-success"
+                            groups="Modulo-Redes---Extension-de-dise-o.group_redes_admin"
+                            attrs="{'invisible': ['|', '|', ('is_redes_project', '=', False), ('tareas_redes_generadas', '=', False), ('ultimo_mes_generado', '>=', 'duracion_meses')]}"/>
+
+                    <button name="action_regenerar_mes_1"
+                            string="🔄 Regenerar Mes 1"
+                            type="object"
+                            class="btn-secondary"
+                            groups="Modulo-Redes---Extension-de-dise-o.group_redes_admin"
+                            confirm="¿Deseas regenerar el Mes 1? Se limpiarán las tareas de redes anteriores para evitar duplicados."
+                            attrs="{'invisible': ['|', ('is_redes_project', '=', False), ('tareas_redes_generadas', '=', False)]}"/>
                 </xpath>
 
                 <xpath expr="//sheet" position="before">
@@ -20,46 +51,9 @@
                         📌 <strong>Proyecto de Redes Sociales Activo</strong>: Tareas del <strong>Mes <field name="ultimo_mes_generado" readonly="1"/> de <field name="duracion_meses" readonly="1"/></strong> (Semana activa: <strong><field name="ultima_semana_generada" readonly="1"/></strong>).
                     </div>
                 </xpath>
-            </field>
-        </record>
-
-        <!-- Botones de generación y Solapa de Configuración de Redes accesibles EXCLUSIVAMENTE para Administrador (Redes)
-             (Administrador de Proyectos lo hereda). Vista aparte con groups_id para no depender del nombre técnico del módulo en groups="". -->
-        <record id="view_project_project_form_redes_config" model="ir.ui.view">
-            <field name="name">project.project.form.redes.config</field>
-            <field name="model">project.project</field>
-            <field name="inherit_id" ref="project.edit_project"/>
-            <field name="groups_id" eval="[(6, 0, [ref('group_redes_admin')])]"/>
-            <field name="arch" type="xml">
-                <xpath expr="//header" position="inside">
-                    <button name="action_generar_tareas_redes"
-                            string="🚀 Generar Mes 1"
-                            type="object"
-                            class="btn-primary"
-                            attrs="{'invisible': ['|', ('is_redes_project', '=', False), ('tareas_redes_generadas', '=', True)]}"/>
-
-                    <button name="action_generar_proxima_semana"
-                            string="⚡ Generar Próxima Semana"
-                            type="object"
-                            class="btn-info"
-                            attrs="{'invisible': [('is_redes_project', '=', False)]}"/>
-
-                    <button name="action_generar_proximo_mes"
-                            string="📅 Generar Próximo Mes"
-                            type="object"
-                            class="btn-success"
-                            attrs="{'invisible': ['|', '|', ('is_redes_project', '=', False), ('tareas_redes_generadas', '=', False), ('ultimo_mes_generado', '>=', 'duracion_meses')]}"/>
-
-                    <button name="action_regenerar_mes_1"
-                            string="🔄 Regenerar Mes 1"
-                            type="object"
-                            class="btn-secondary"
-                            confirm="¿Deseas regenerar el Mes 1? Se limpiarán las tareas de redes anteriores para evitar duplicados."
-                            attrs="{'invisible': ['|', ('is_redes_project', '=', False), ('tareas_redes_generadas', '=', False)]}"/>
-                </xpath>
 
                 <xpath expr="//notebook" position="inside">
-                    <page string="📱 Configuración de Redes Sociales" name="page_redes_config">
+                    <page string="📱 Configuración de Redes Sociales" name="page_redes_config" groups="Modulo-Redes---Extension-de-dise-o.group_redes_admin">
                         <group>
                             <group string="Parámetros del Contrato">
                                 <field name="is_redes_project"/>
