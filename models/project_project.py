@@ -142,7 +142,8 @@ class ProjectProject(models.Model):
         """
         Cron automatizado diario:
         1. Revisa los proyectos de redes activos y los mueve automáticamente a la etapa del mes actual.
-        2. Genera progresivamente las semanas de publicaciones a medida que avanza el calendario (Semana 1 -> 2 -> 3 -> 4).
+        2. Al empezar cada semana (lunes) genera la semana en curso (y el mes, si es nuevo).
+        3. El día 1 de cada mes genera la factura en borrador de la cuota.
         """
         _logger.info("Ejecutando cron para actualizar etapas y avance semanal de Proyectos de Redes...")
         today = fields.Date.today()
@@ -158,26 +159,18 @@ class ProjectProject(models.Model):
                 project.write({'stage_id': etapa_mes_actual.id})
                 _logger.info(f"Proyecto {project.name} movido automáticamente a la etapa de mes '{etapa_mes_actual.name}'.")
 
-            # 2. Avance progresivo de semanas según fecha
-            if project.fecha_inicio_redes:
-                dias_transcurridos = (today - project.fecha_inicio_redes).days
-                semana_actual = max(1, (dias_transcurridos // 7) + 1)
-                max_semanas = (project.duracion_meses or 6) * 4
-                semana_objetivo = min(semana_actual, max_semanas)
+            # 2. Al empezar cada semana (lunes) se genera la semana en curso; si es de un mes nuevo, también el mes.
+            # Sólo proyectos ya arrancados con "Generar Mes 1" (así no se genera antes de configurarlos).
+            # Las semanas que quedaron atrás no se generan (sin tareas retroactivas).
+            if project.tareas_redes_generadas:
+                semana_actual = ((today - project._fecha_semana(1)).days // 7) + 1
+                if (project.ultima_semana_generada or 0) < semana_actual <= (project.duracion_meses or 6) * 4:
+                    project._generar_semana(semana_actual)
+                    _logger.info(f"Cron generó la Semana {semana_actual} para el proyecto {project.name}.")
 
-                while (project.ultima_semana_generada or 0) < semana_objetivo:
-                    siguiente_semana = (project.ultima_semana_generada or 0) + 1
-                    mes_perteneciente = ((siguiente_semana - 1) // 4) + 1
-                    fecha_semana = project.fecha_inicio_redes + timedelta(days=(siguiente_semana - 1) * 7)
-                    nombre_mes = project._get_nombre_mes(fecha_semana)
-                    stages_dict = project._obtener_o_crear_etapas_redes()
-
-                    if mes_perteneciente > (project.ultimo_mes_generado or 0):
-                        project.generar_mes_redes(mes_idx=mes_perteneciente)
-                    else:
-                        project._generar_semana_publicaciones(stages_dict, siguiente_semana, mes_perteneciente, fecha_semana, nombre_mes)
-                        project.ultima_semana_generada = siguiente_semana
-                    _logger.info(f"Cron generó automáticamente la Semana {siguiente_semana} para el proyecto {project.name}.")
+            # 3. Día 1: factura en borrador de la cuota del mes
+            if today.day == 1:
+                project._crear_factura_cuota(today)
 
     @api.model_create_multi
     def create(self, vals_list):
@@ -470,19 +463,13 @@ class ProjectProject(models.Model):
         self.ensure_one()
         self._check_redes_access()
         self = self.sudo()
-        stages_dict = self._obtener_o_crear_etapas_redes()
-        start_date = self.fecha_inicio_redes or fields.Date.today()
-        
+
         siguiente_semana = (self.ultima_semana_generada or 0) + 1
-        mes_perteneciente = ((siguiente_semana - 1) // 4) + 1
-        if mes_perteneciente > self.duracion_meses:
+        if ((siguiente_semana - 1) // 4) + 1 > self.duracion_meses:
             raise UserError(_(f"Ya se han generado todas las semanas para los {self.duracion_meses} meses de contrato."))
 
-        fecha_semana = start_date + timedelta(days=(siguiente_semana - 1) * 7)
-        nombre_mes = self._get_nombre_mes(fecha_semana)
-
-        self._generar_semana_publicaciones(stages_dict, siguiente_semana, mes_perteneciente, fecha_semana, nombre_mes)
-        self.ultima_semana_generada = siguiente_semana
+        self._generar_semana(siguiente_semana)
+        nombre_mes = self._get_nombre_mes(self._fecha_semana(siguiente_semana))
 
         return {
             'type': 'ir.actions.client',
@@ -494,6 +481,23 @@ class ProjectProject(models.Model):
                 'sticky': False,
             }
         }
+
+    def _fecha_semana(self, semana):
+        """Lunes de la semana N del contrato: las semanas arrancan el lunes, no el día en que se generan."""
+        inicio = self.fecha_inicio_redes or fields.Date.today()
+        return inicio + timedelta(days=7 * (semana - 1) - inicio.weekday())
+
+    def _generar_semana(self, semana):
+        """Genera la semana N. Si pertenece a un mes todavía no generado, genera primero el mes
+        (tareas mensuales + su 1ª semana), igual que el cron y el botón 'Generar Próxima Semana'."""
+        mes = ((semana - 1) // 4) + 1
+        if mes > (self.ultimo_mes_generado or 0):
+            self.generar_mes_redes(mes_idx=mes)
+        if semana > (self.ultima_semana_generada or 0):
+            fecha_semana = self._fecha_semana(semana)
+            self._generar_semana_publicaciones(self._obtener_o_crear_etapas_redes(), semana, mes,
+                                               fecha_semana, self._get_nombre_mes(fecha_semana))
+            self.ultima_semana_generada = semana
 
     def _generar_semana_publicaciones(self, stages_dict, semana_global, mes_idx, fecha_semana, nombre_mes):
         """
@@ -513,7 +517,8 @@ class ProjectProject(models.Model):
 
         # 1. Armado de cada publicación: 1 GRUPO (Tarea Padre) por cada publicación y red social
         for p in range(1, cant_publis + 1):
-            fecha_publi = fecha_semana + timedelta(days=min(6, (p - 1) * max(1, 6 // cant_publis) + 1))
+            # Repartidas de lunes a viernes: 1 → mié, 2 → mar/jue, 3 → lun/mié/vie (los fines de semana se editan a mano)
+            fecha_publi = fecha_semana + timedelta(days=(2 * p - 1) * 5 // (2 * cant_publis))
             fecha_diseno = fecha_publi - timedelta(days=self.dias_anticipacion_diseno or 5)
 
             # Tarea Padre (El grupo visible en el tablero Kanban)
@@ -591,7 +596,7 @@ class ProjectProject(models.Model):
             'name': f'Verificación Semanal Publicaciones - Sem {semana_global} ({nombre_mes})',
             'project_id': self.id,
             'user_id': self.user_abril_id.id if self.user_abril_id else None,
-            'date_deadline': fecha_semana + timedelta(days=6),
+            'date_deadline': fecha_semana + timedelta(days=4),
             'es_tarea_redes': True,
             'tipo_tarea_redes': 'verificacion_semanal',
             'description': f'Auditoría y verificación semanal de publicaciones programadas para la Semana {semana_global}.'
@@ -623,6 +628,36 @@ class ProjectProject(models.Model):
                     'red_social': red_nombre,
                     'description': f'Configuración y activación de pauta / campaña paga ({cant_pagas_mes} publicaciones pagas en el mes) para la Semana {semana_global}.'
                 }, stage_id=st_semanal)
+
+    def _crear_factura_cuota(self, hoy):
+        """Día 1 de cada mes: factura en BORRADOR de la próxima cuota, vinculada al proyecto.
+        - La cuota 1 se factura desde el presupuesto al aprobarse: acá se generan de la 2 a la N.
+        - Precio del presupuesto = precio por mes. Cada cuota copia la anterior, así el ajuste manual
+          por IPC (cada 3 meses) se arrastra; el administrativo revisa, confirma y envía."""
+        order = self.env['sale.order'].sudo().search([('redes_project_id', '=', self.id)], limit=1)
+        if not order or self.create_date.date() >= hoy:
+            return  # sin presupuesto, o el proyecto arrancó este mismo mes (la 1ª cuota ya salió del presupuesto)
+        Move = self.env['account.move'].sudo()
+        cuotas = Move.search([('redes_project_id', '=', self.id), ('state', '!=', 'cancel')], order='id desc')
+        numero = len(cuotas) + 2
+        if numero > (self.duracion_meses or 0) or (cuotas and cuotas[0].create_date.date() == hoy):
+            return  # contrato terminado, o ya se generó hoy
+        ref = f"Cuota {numero}/{self.duracion_meses} {self._get_nombre_mes(hoy)} - {self.name}"
+        if cuotas:
+            Move.browse(cuotas[0].id).copy({'ref': ref, 'invoice_date': False})
+            return
+        lineas = order.order_line.filtered(lambda l: l._es_linea_redes())
+        if not lineas:
+            return
+        vals = order._prepare_invoice()  # cliente, diario, condiciones de pago y origen = presupuesto
+        vals.update({'ref': ref, 'redes_project_id': self.id, 'invoice_line_ids': []})
+        for l in lineas:
+            # Sin sale_line_ids: un presupuesto de Redes tiene muchas facturas y vincularlas a la línea
+            # lo daría por sobrefacturado / sugeriría notas de crédito al volver a facturar desde la venta.
+            linea = l._prepare_invoice_line(quantity=1)
+            linea.pop('sale_line_ids', None)
+            vals['invoice_line_ids'].append((0, 0, linea))
+        Move.create(vals)
 
     def generar_mes_redes(self, mes_idx=1):
         """
@@ -684,9 +719,10 @@ class ProjectProject(models.Model):
                 'description': f'Administración mensual correspondiente a {nombre_mes}.'
             }, stage_id=st_admin_mensual)
 
-        # 4. Generar ÚNICAMENTE la Semana 1 activa del mes en 'Gestión Semanal de Publicaciones'
+        # 4. Generar ÚNICAMENTE la Semana 1 activa del mes en 'Gestión Semanal de Publicaciones' (arranca el lunes)
         semana_1_global = ((mes_idx - 1) * 4) + 1
-        self._generar_semana_publicaciones(stages_dict, semana_1_global, mes_idx, fecha_inicio_mes, nombre_mes)
+        fecha_semana_1 = self._fecha_semana(semana_1_global)
+        self._generar_semana_publicaciones(stages_dict, semana_1_global, mes_idx, fecha_semana_1, self._get_nombre_mes(fecha_semana_1))
 
         self.tareas_redes_generadas = True
         self.ultimo_mes_generado = mes_idx

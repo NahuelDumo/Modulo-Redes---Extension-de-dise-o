@@ -9,7 +9,7 @@
             <field name="arch" type="xml">
                 <xpath expr="//sheet" position="before">
                     <div class="alert alert-warning" role="alert" attrs="{'invisible': [('es_diseno_simplificado', '=', False)]}">
-                        ⚡ <strong>Diseño Simplificado de Redes Sociales</strong>: Este diseño consta de 1 sola etapa y checklist reducido. Al ser aprobado, pasa directamente a completado.
+                        ⚡ <strong>Diseño Simplificado de Redes Sociales</strong>: Este diseño consta de 1 sola etapa y checklist reducido. Al ser aprobado, pasa directamente a Finalizado (listo para subir a redes).
                     </div>
                 </xpath>
 
@@ -44,8 +44,8 @@
                     
                     <filter string="📌 Pendientes de Aprobación" name="pendientes"
                             domain="[('state', 'in', ['borrador', 'validacion', 'cliente', 'correcciones_solicitadas'])]"/>
-                    <filter string="✅ Aprobados / Completados" name="aprobados"
-                            domain="[('state', '=', 'aprobado')]"/>
+                    <filter string="✅ Finalizados (listos para subir a redes)" name="aprobados"
+                            domain="[('etapa', '=', 'completo')]"/>
                     
                     <separator/>
                     <group expand="0" string="Agrupar Por">

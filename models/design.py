@@ -14,6 +14,9 @@ class Design(models.Model):
         tracking=True,
         help="Los Diseños Simplificados poseen únicamente la Etapa 1 y un checklist de verificación reducido."
     )
+    # Etapa final = "Finalizado": listo para subir a redes (o para imprenta en el proceso de 2 etapas).
+    # Sólo cambia la etiqueta; el valor 'completo' sigue igual para no tocar la lógica ni el portal.
+    etapa = fields.Selection(selection_add=[('completo', 'Finalizado')])
 
     @api.model_create_multi
     def create(self, vals_list):

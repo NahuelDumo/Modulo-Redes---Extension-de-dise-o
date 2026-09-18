@@ -25,8 +25,8 @@ class ProjectTask(models.Model):
     ], string='Tipo de Tarea de Redes', index=True)
 
     red_social = fields.Char(string='Red Social (Campañas)')
-    design_id = fields.Many2one('design.design', string='Diseño Simplificado Asociado')
-    
+    design_id = fields.Many2one('design.design', string='Diseño Simplificado Asociado', copy=False)
+
     es_diseno_simplificado = fields.Boolean(
         string='Es Diseño Simplificado',
         compute='_compute_es_diseno_simplificado',
@@ -45,6 +45,22 @@ class ProjectTask(models.Model):
             if record.design_id and record.design_id.task_id != record:
                 record.design_id.task_id = record.id
         return records
+
+    def copy(self, default=None):
+        # Duplicar una publicación (Odoo copia también las subtareas): la subtarea de diseño recibe un diseño
+        # nuevo en borrador en vez de compartir (y quitarle) el de la tarea original.
+        default = dict(default or {})
+        if self.design_id and 'design_id' not in default:
+            d = self.design_id
+            default['design_id'] = self.env['design.design'].sudo().create({
+                'name': f"{d.name} (copia)",
+                'cliente_id': d.cliente_id.id,
+                'categoria_id': d.categoria_id.id,
+                'es_diseno_simplificado': d.es_diseno_simplificado,
+                'etapa': 'etapa1',
+                'visible_para_cliente': d.visible_para_cliente,
+            }).id
+        return super().copy(default)
 
     def write(self, vals):
         res = super(ProjectTask, self).write(vals)

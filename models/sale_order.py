@@ -5,6 +5,16 @@ import logging
 
 _logger = logging.getLogger(__name__)
 
+
+class SaleOrderLine(models.Model):
+    _inherit = 'sale.order.line'
+
+    def _es_linea_redes(self):
+        """Producto de Redes: categoría o nombre con 'redes' / 'rrss'."""
+        nombres = f"{self.product_id.name or ''} {self.product_id.categ_id.name or ''}".lower()
+        return bool(self.product_id) and ('redes' in nombres or 'rrss' in nombres)
+
+
 class SaleOrder(models.Model):
     _inherit = 'sale.order'
 
@@ -22,15 +32,7 @@ class SaleOrder(models.Model):
     @api.depends('order_line.product_id', 'order_line.product_id.categ_id', 'order_line.product_id.name')
     def _compute_has_redes_service(self):
         for order in self:
-            has_redes = False
-            for line in order.order_line:
-                if line.product_id:
-                    prod_name = (line.product_id.name or '').lower()
-                    cat_name = (line.product_id.categ_id.name or '').lower() if line.product_id.categ_id else ''
-                    if 'redes' in cat_name or 'rrss' in cat_name or 'redes' in prod_name or 'rrss' in prod_name:
-                        has_redes = True
-                        break
-            order.has_redes_service = has_redes
+            order.has_redes_service = any(line._es_linea_redes() for line in order.order_line)
 
     def action_confirm(self):
         """
