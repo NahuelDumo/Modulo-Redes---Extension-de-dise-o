@@ -10,6 +10,7 @@
             <field name="view_mode">kanban,tree,form</field>
             <field name="domain">[('is_redes_project', '=', True)]</field>
             <field name="context">{'default_is_redes_project': True}</field>
+            <field name="groups_id" eval="[(6, 0, [ref('group_redes_admin')])]"/>
             <field name="help" type="html">
                 <p class="o_view_nocontent_smiling_face">
                     Crea tu primer proyecto de Redes Sociales
@@ -51,6 +52,7 @@
             <field name="res_model">project.task</field>
             <field name="view_mode">calendar,tree,kanban,form</field>
             <field name="domain">[('es_tarea_redes', '=', True), ('tipo_tarea_redes', '=', 'publicacion')]</field>
+            <field name="groups_id" eval="[(6, 0, [ref('group_redes_admin')])]"/>
         </record>
 
         <!-- Acción: Plantillas de Planes de Redes -->
@@ -58,6 +60,7 @@
             <field name="name">Plantillas de Planes de Redes</field>
             <field name="res_model">redes.plan.template</field>
             <field name="view_mode">tree,form</field>
+            <field name="groups_id" eval="[(6, 0, [ref('group_redes_admin')])]"/>
         </record>
 
         <!-- Acción: Plantillas de Checklist Corto -->
@@ -67,6 +70,7 @@
             <field name="view_mode">tree,form</field>
             <field name="domain">[('is_simplified', '=', True)]</field>
             <field name="context">{'default_is_simplified': True}</field>
+            <field name="groups_id" eval="[(6, 0, [ref('group_redes_admin')])]"/>
         </record>
 
 

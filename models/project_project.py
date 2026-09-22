@@ -37,8 +37,49 @@ class ProjectProject(models.Model):
                 if operaciones_menus:
                     operaciones_menus.write({'active': False})
                     _logger.info("Menú viejo Operaciones desactivado exitosamente")
+
+            # Sincronización forzada de permisos de menús de Redes en base de datos
+            admin_group = self.env.ref('Modulo-Redes---Extension-de-dise-o.group_redes_admin', raise_if_not_found=False)
+            if not admin_group:
+                admin_group = self.env['res.groups'].search([('name', '=', 'Administrador (Redes)')], limit=1)
+
+            designer_group = self.env.ref('Modulo-Redes---Extension-de-dise-o.group_redes_designer', raise_if_not_found=False)
+            if not designer_group:
+                designer_group = self.env['res.groups'].search([('name', '=', 'Diseñador (Redes)')], limit=1)
+
+            if admin_group:
+                # 1. Menús exclusivos de Administrador: Proyectos, Calendario, Configuración, Planes, Checklist Corto
+                admin_menu_names = [
+                    'Proyectos de Redes',
+                    'Calendario de Publicaciones',
+                    'Configuración Redes',
+                    'Planes de Redes',
+                    'Checklist Corto (Simplificado)',
+                    'Checklist Corto'
+                ]
+                admin_menus = self.env['ir.ui.menu'].search([('name', 'in', admin_menu_names)])
+                for m in admin_menus:
+                    m.write({'groups_id': [(6, 0, [admin_group.id])]})
+
+                # 2. Menús compartidos: Tareas Pendientes Diseñadores, Diseños Simplificados
+                if designer_group:
+                    shared_menu_names = [
+                        'Tareas Pendientes Diseñadores',
+                        'Diseños Simplificados'
+                    ]
+                    shared_menus = self.env['ir.ui.menu'].search([('name', 'in', shared_menu_names)])
+                    for m in shared_menus:
+                        m.write({'groups_id': [(6, 0, [admin_group.id, designer_group.id])]})
+
+                # 3. Acciones de ventana restringidas
+                for act_name in ['Proyectos de Redes Sociales', 'Calendario de Publicaciones', 'Plantillas de Planes de Redes', 'Checklist Corto (Diseño Simplificado)']:
+                    acts = self.env['ir.actions.act_window'].search([('name', '=', act_name)])
+                    for act in acts:
+                        act.write({'groups_id': [(6, 0, [admin_group.id])]})
+
+                _logger.info("Permisos de menús de Redes Sociales sincronizados exitosamente en _register_hook")
         except Exception as e:
-            _logger.warning(f"No se pudo limpiar/renombrar menú en _register_hook: {e}")
+            _logger.warning(f"No se pudo sincronizar permisos de menús en _register_hook: {e}")
         return res
 
     is_redes_project = fields.Boolean(
