@@ -76,6 +76,35 @@
             <field name="model_id" ref="project.model_project_task"/>
             <field name="domain_force">[('user_ids', 'in', [user.id])]</field>
             <field name="groups" eval="[(4, ref('group_redes_designer'))]"/>
+            <field name="perm_read" eval="1"/>
+            <field name="perm_write" eval="0"/>
+            <field name="perm_create" eval="0"/>
+            <field name="perm_unlink" eval="0"/>
+        </record>
+
+        <!-- Restricciones globales para Diseñador (Redes):
+             No puede modificar, crear ni eliminar tareas de Redes (sólo lectura estricta).
+             Al ser regla global (sin groups), se aplica con AND y anula cualquier permiso heredado de Usuario de Proyecto. -->
+        <record id="project_task_redes_designer_no_write_rule" model="ir.rule">
+            <field name="name">Tareas de Redes: Diseñador no puede editar ni crear tareas de Redes</field>
+            <field name="model_id" ref="project.model_project_task"/>
+            <field name="domain_force">['&amp;', ('es_tarea_redes', '=', False), '|', ('project_id', '=', False), ('project_id.is_redes_project', '=', False)] if user.has_group('Modulo-Redes---Extension-de-dise-o.group_redes_designer') and not (user.has_group('Modulo-Redes---Extension-de-dise-o.group_redes_admin') or user.has_group('project.group_project_manager')) else [(1, '=', 1)]</field>
+            <field name="perm_read" eval="0"/>
+            <field name="perm_write" eval="1"/>
+            <field name="perm_create" eval="1"/>
+            <field name="perm_unlink" eval="1"/>
+        </record>
+
+        <!-- Restricción global de lectura para Diseñador (Redes):
+             En proyectos de Redes, sólo puede ver las tareas en las que esté asignado como responsable. -->
+        <record id="project_task_redes_designer_read_rule" model="ir.rule">
+            <field name="name">Tareas de Redes: Diseñador sólo ve tareas de Redes asignadas</field>
+            <field name="model_id" ref="project.model_project_task"/>
+            <field name="domain_force">['|', ('user_ids', 'in', [user.id]), '&amp;', ('es_tarea_redes', '=', False), '|', ('project_id', '=', False), ('project_id.is_redes_project', '=', False)] if user.has_group('Modulo-Redes---Extension-de-dise-o.group_redes_designer') and not (user.has_group('Modulo-Redes---Extension-de-dise-o.group_redes_admin') or user.has_group('project.group_project_manager')) else [(1, '=', 1)]</field>
+            <field name="perm_read" eval="1"/>
+            <field name="perm_write" eval="0"/>
+            <field name="perm_create" eval="0"/>
+            <field name="perm_unlink" eval="0"/>
         </record>
 
         <!-- Restricción: el Administrador (Redes) que NO es Administrador de Proyectos sólo ve Redes.

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields, api, _
+from odoo.exceptions import AccessError, UserError
 
 class ProjectTask(models.Model):
     _inherit = 'project.task'
@@ -33,6 +34,19 @@ class ProjectTask(models.Model):
         store=True
     )
 
+    es_disenador_redes = fields.Boolean(
+        string='Es Diseñador de Redes',
+        compute='_compute_es_disenador_redes'
+    )
+
+    def _compute_es_disenador_redes(self):
+        user = self.env.user
+        is_designer = user.has_group('Modulo-Redes---Extension-de-dise-o.group_redes_designer')
+        is_admin = user.has_group('Modulo-Redes---Extension-de-dise-o.group_redes_admin') or user.has_group('project.group_project_manager') or self.env.is_superuser()
+        val = bool(is_designer and not is_admin)
+        for task in self:
+            task.es_disenador_redes = val
+
     @api.depends('design_id', 'tipo_tarea_redes')
     def _compute_es_diseno_simplificado(self):
         for task in self:
@@ -40,6 +54,18 @@ class ProjectTask(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        user = self.env.user
+        is_designer = user.has_group('Modulo-Redes---Extension-de-dise-o.group_redes_designer')
+        is_admin = user.has_group('Modulo-Redes---Extension-de-dise-o.group_redes_admin') or user.has_group('project.group_project_manager') or self.env.is_superuser()
+        if is_designer and not is_admin:
+            for vals in vals_list:
+                if vals.get('es_tarea_redes'):
+                    raise AccessError(_("Los diseñadores no tienen permisos para crear tareas en el proceso de Redes Sociales."))
+                if vals.get('project_id'):
+                    project = self.env['project.project'].browse(vals['project_id'])
+                    if project.is_redes_project:
+                        raise AccessError(_("Los diseñadores no tienen permisos para crear tareas en proyectos de Redes Sociales."))
+
         records = super(ProjectTask, self).create(vals_list)
         for record in records:
             if record.design_id and record.design_id.task_id != record:
@@ -63,12 +89,30 @@ class ProjectTask(models.Model):
         return super().copy(default)
 
     def write(self, vals):
+        user = self.env.user
+        is_designer = user.has_group('Modulo-Redes---Extension-de-dise-o.group_redes_designer')
+        is_admin = user.has_group('Modulo-Redes---Extension-de-dise-o.group_redes_admin') or user.has_group('project.group_project_manager') or self.env.is_superuser()
+        if is_designer and not is_admin:
+            redes_tasks = self.filtered(lambda t: t.es_tarea_redes or (t.project_id and t.project_id.is_redes_project))
+            if redes_tasks:
+                raise AccessError(_("Los diseñadores tienen permisos de sólo lectura sobre las tareas de Redes Sociales y no pueden modificar el responsable, plazos u otros datos."))
+
         res = super(ProjectTask, self).write(vals)
         if 'design_id' in vals:
             for record in self:
                 if record.design_id and record.design_id.task_id != record:
                     record.design_id.task_id = record.id
         return res
+
+    def unlink(self):
+        user = self.env.user
+        is_designer = user.has_group('Modulo-Redes---Extension-de-dise-o.group_redes_designer')
+        is_admin = user.has_group('Modulo-Redes---Extension-de-dise-o.group_redes_admin') or user.has_group('project.group_project_manager') or self.env.is_superuser()
+        if is_designer and not is_admin:
+            redes_tasks = self.filtered(lambda t: t.es_tarea_redes or (t.project_id and t.project_id.is_redes_project))
+            if redes_tasks:
+                raise AccessError(_("Los diseñadores no tienen permisos para eliminar tareas del proceso de Redes Sociales."))
+        return super(ProjectTask, self).unlink()
 
     def action_open_associated_design(self):
         """Abre la vista formulario del diseño simplificado asociado"""

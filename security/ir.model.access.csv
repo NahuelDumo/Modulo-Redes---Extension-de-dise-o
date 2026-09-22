@@ -7,4 +7,6 @@ access_redes_plan_line_admin,redes.plan.line.admin,model_redes_plan_line,group_r
 access_redes_plan_line_manager,redes.plan.line.manager,model_redes_plan_line,project.group_project_manager,1,1,1,1
 access_redes_plan_line_user,redes.plan.line.user,model_redes_plan_line,group_redes_user,1,0,0,0
 access_project_project_redes_admin,project.project.redes.admin,project.model_project_project,group_redes_admin,1,1,0,0
+access_project_project_redes_designer,project.project.redes.designer,project.model_project_project,group_redes_designer,1,0,0,0
 access_project_task_redes_admin,project.task.redes.admin,project.model_project_task,group_redes_admin,1,1,0,0
+access_project_task_redes_designer,project.task.redes.designer,project.model_project_task,group_redes_designer,1,0,0,0

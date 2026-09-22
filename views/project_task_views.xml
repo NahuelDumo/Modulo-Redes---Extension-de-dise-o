@@ -21,11 +21,18 @@
                     </button>
                 </xpath>
 
+                <xpath expr="//sheet" position="before">
+                    <field name="es_disenador_redes" invisible="1"/>
+                    <div class="alert alert-info" role="alert" attrs="{'invisible': ['|', ('es_tarea_redes', '=', False), ('es_disenador_redes', '=', False)]}">
+                        🔒 <strong>Tarea de Redes Sociales</strong>: Modo sólo lectura. Para trabajar en el arte o checklist, utiliza el botón superior <strong>Diseño Simplificado</strong>.
+                    </div>
+                </xpath>
+
                 <xpath expr="//sheet//field[@name='project_id']" position="after">
-                    <field name="es_tarea_redes"/>
-                    <field name="tipo_tarea_redes" attrs="{'invisible': [('es_tarea_redes', '=', False)]}"/>
-                    <field name="red_social" attrs="{'invisible': [('tipo_tarea_redes', '!=', 'campana_paga')]}"/>
-                    <field name="design_id" attrs="{'invisible': [('design_id', '=', False)]}"/>
+                    <field name="es_tarea_redes" attrs="{'readonly': [('es_disenador_redes', '=', True)]}"/>
+                    <field name="tipo_tarea_redes" attrs="{'invisible': [('es_tarea_redes', '=', False)], 'readonly': [('es_disenador_redes', '=', True)]}"/>
+                    <field name="red_social" attrs="{'invisible': [('tipo_tarea_redes', '!=', 'campana_paga')], 'readonly': [('es_disenador_redes', '=', True)]}"/>
+                    <field name="design_id" options="{'no_open': False, 'no_create': True}" attrs="{'invisible': [('design_id', '=', False)], 'readonly': [('es_disenador_redes', '=', True)]}"/>
                 </xpath>
             </field>
         </record>
@@ -35,7 +42,7 @@
             <field name="name">project.task.kanban.designers</field>
             <field name="model">project.task</field>
             <field name="arch" type="xml">
-                <kanban default_group_by="user_ids" class="o_kanban_small_column">
+                <kanban default_group_by="user_ids" class="o_kanban_small_column" create="false">
                     <field name="name"/>
                     <field name="user_ids"/>
                     <field name="date_deadline"/>
