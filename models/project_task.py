@@ -39,11 +39,24 @@ class ProjectTask(models.Model):
         compute='_compute_es_disenador_redes'
     )
 
-    def _compute_es_disenador_redes(self):
+    @api.model
+    def _is_user_designer(self):
         user = self.env.user
-        is_designer = user.has_group('Modulo-Redes---Extension-de-dise-o.group_redes_designer')
-        is_admin = user.has_group('Modulo-Redes---Extension-de-dise-o.group_redes_admin') or user.has_group('project.group_project_manager') or self.env.is_superuser()
-        val = bool(is_designer and not is_admin)
+        is_admin = (
+            user.has_group('Modulo-Redes---Extension-de-dise-o.group_redes_admin') or
+            user.has_group('project.group_project_manager') or
+            self.env.is_superuser() or
+            any(g.name in ['Administrador (Redes)', 'Administrador'] for g in user.groups_id)
+        )
+        if is_admin:
+            return False
+        return (
+            user.has_group('Modulo-Redes---Extension-de-dise-o.group_redes_designer') or
+            any(g.name in ['Diseñador (Redes)', 'Diseñador'] for g in user.groups_id)
+        )
+
+    def _compute_es_disenador_redes(self):
+        val = self._is_user_designer()
         for task in self:
             task.es_disenador_redes = val
 
@@ -54,10 +67,7 @@ class ProjectTask(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        user = self.env.user
-        is_designer = user.has_group('Modulo-Redes---Extension-de-dise-o.group_redes_designer')
-        is_admin = user.has_group('Modulo-Redes---Extension-de-dise-o.group_redes_admin') or user.has_group('project.group_project_manager') or self.env.is_superuser()
-        if is_designer and not is_admin:
+        if self._is_user_designer():
             for vals in vals_list:
                 if vals.get('es_tarea_redes'):
                     raise AccessError(_("Los diseñadores no tienen permisos para crear tareas en el proceso de Redes Sociales."))
@@ -89,10 +99,7 @@ class ProjectTask(models.Model):
         return super().copy(default)
 
     def write(self, vals):
-        user = self.env.user
-        is_designer = user.has_group('Modulo-Redes---Extension-de-dise-o.group_redes_designer')
-        is_admin = user.has_group('Modulo-Redes---Extension-de-dise-o.group_redes_admin') or user.has_group('project.group_project_manager') or self.env.is_superuser()
-        if is_designer and not is_admin:
+        if self._is_user_designer():
             redes_tasks = self.filtered(lambda t: t.es_tarea_redes or (t.project_id and t.project_id.is_redes_project))
             if redes_tasks:
                 raise AccessError(_("Los diseñadores tienen permisos de sólo lectura sobre las tareas de Redes Sociales y no pueden modificar el responsable, plazos u otros datos."))
@@ -105,10 +112,7 @@ class ProjectTask(models.Model):
         return res
 
     def unlink(self):
-        user = self.env.user
-        is_designer = user.has_group('Modulo-Redes---Extension-de-dise-o.group_redes_designer')
-        is_admin = user.has_group('Modulo-Redes---Extension-de-dise-o.group_redes_admin') or user.has_group('project.group_project_manager') or self.env.is_superuser()
-        if is_designer and not is_admin:
+        if self._is_user_designer():
             redes_tasks = self.filtered(lambda t: t.es_tarea_redes or (t.project_id and t.project_id.is_redes_project))
             if redes_tasks:
                 raise AccessError(_("Los diseñadores no tienen permisos para eliminar tareas del proceso de Redes Sociales."))

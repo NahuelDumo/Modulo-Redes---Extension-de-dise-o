@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     'name': 'Módulo de Redes Sociales - Extensión de Diseños',
-    'version': '1.4',
+    'version': '1.5',
     'category': 'Project',
     'summary': 'Gestión de proyectos de Redes Sociales, automatización por meses, 11 etapas de trabajo y Diseño Simplificado',
     'description': """

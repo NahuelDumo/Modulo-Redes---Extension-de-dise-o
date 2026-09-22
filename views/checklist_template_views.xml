@@ -8,12 +8,12 @@
             <field name="inherit_id" ref="ModuloDisenoOdoo.view_form_checklist_template"/>
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='etapa']" position="after">
-                    <field name="is_simplified"/>
+                    <field name="is_simplified" groups="Modulo-Redes---Extension-de-dise-o.group_redes_admin"/>
                 </xpath>
 
                 <xpath expr="//sheet" position="before">
                     <div class="alert alert-info" role="alert" attrs="{'invisible': [('is_simplified', '=', False)]}">
-                        📝 <strong>Plantilla de Checklist Corto (Diseño Simplificado)</strong>: Los ítems configurados aquí serán utilizados para verificar los diseños simplificados de Redes Sociales.
+                        📝 <strong>Plantilla de Checklist Corto (Diseño Simplificado)</strong>: Los ítems configurados aquí son exclusivos de Redes Sociales y administrados únicamente por el Administrador de Redes.
                     </div>
                 </xpath>
             </field>

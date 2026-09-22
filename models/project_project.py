@@ -39,16 +39,26 @@ class ProjectProject(models.Model):
                     _logger.info("Menú viejo Operaciones desactivado exitosamente")
 
             # Sincronización forzada de permisos de menús de Redes en base de datos
-            admin_group = self.env.ref('Modulo-Redes---Extension-de-dise-o.group_redes_admin', raise_if_not_found=False)
+            admin_group = self.env['res.groups'].search([('name', '=', 'Administrador (Redes)')], limit=1)
             if not admin_group:
-                admin_group = self.env['res.groups'].search([('name', '=', 'Administrador (Redes)')], limit=1)
+                admin_group = self.env.ref('Modulo-Redes---Extension-de-dise-o.group_redes_admin', raise_if_not_found=False)
 
-            designer_group = self.env.ref('Modulo-Redes---Extension-de-dise-o.group_redes_designer', raise_if_not_found=False)
-            if not designer_group:
-                designer_group = self.env['res.groups'].search([('name', '=', 'Diseñador (Redes)')], limit=1)
+            designer_groups = self.env['res.groups'].search([('name', 'in', ['Diseñador (Redes)', 'Diseñador'])])
 
             if admin_group:
                 # 1. Menús exclusivos de Administrador: Proyectos, Calendario, Configuración, Planes, Checklist Corto
+                xml_menu_admin = [
+                    'menu_redes_proyectos',
+                    'menu_redes_calendario',
+                    'menu_redes_configuracion',
+                    'menu_redes_config_planes',
+                    'menu_redes_config_checklist',
+                ]
+                for mid in xml_menu_admin:
+                    m = self.env.ref(f'Modulo-Redes---Extension-de-dise-o.{mid}', raise_if_not_found=False)
+                    if m:
+                        m.write({'groups_id': [(6, 0, [admin_group.id])]})
+
                 admin_menu_names = [
                     'Proyectos de Redes',
                     'Calendario de Publicaciones',
@@ -62,25 +72,87 @@ class ProjectProject(models.Model):
                     m.write({'groups_id': [(6, 0, [admin_group.id])]})
 
                 # 2. Menús compartidos: Tareas Pendientes Diseñadores, Diseños Simplificados
-                if designer_group:
-                    shared_menu_names = [
-                        'Tareas Pendientes Diseñadores',
-                        'Diseños Simplificados'
-                    ]
-                    shared_menus = self.env['ir.ui.menu'].search([('name', 'in', shared_menu_names)])
-                    for m in shared_menus:
-                        m.write({'groups_id': [(6, 0, [admin_group.id, designer_group.id])]})
+                shared_group_ids = [admin_group.id] + designer_groups.ids
+                xml_menu_shared = [
+                    'menu_redes_disenadores',
+                    'menu_redes_disenos',
+                ]
+                for mid in xml_menu_shared:
+                    m = self.env.ref(f'Modulo-Redes---Extension-de-dise-o.{mid}', raise_if_not_found=False)
+                    if m:
+                        m.write({'groups_id': [(6, 0, shared_group_ids)]})
+
+                shared_menu_names = [
+                    'Tareas Pendientes Diseñadores',
+                    'Diseños Simplificados'
+                ]
+                shared_menus = self.env['ir.ui.menu'].search([('name', 'in', shared_menu_names)])
+                for m in shared_menus:
+                    m.write({'groups_id': [(6, 0, shared_group_ids)]})
 
                 # 3. Acciones de ventana restringidas
-                for act_name in ['Proyectos de Redes Sociales', 'Calendario de Publicaciones', 'Plantillas de Planes de Redes', 'Checklist Corto (Diseño Simplificado)']:
-                    acts = self.env['ir.actions.act_window'].search([('name', '=', act_name)])
-                    for act in acts:
+                actions_admin_xml = [
+                    'action_redes_projects',
+                    'action_redes_calendar_tasks',
+                    'action_redes_plan_templates',
+                    'action_redes_checklist_short_templates',
+                ]
+                for aid in actions_admin_xml:
+                    act = self.env.ref(f'Modulo-Redes---Extension-de-dise-o.{aid}', raise_if_not_found=False)
+                    if act:
                         act.write({'groups_id': [(6, 0, [admin_group.id])]})
+
+                actions_admin_names = [
+                    'Proyectos de Redes Sociales',
+                    'Calendario de Publicaciones',
+                    'Plantillas de Planes de Redes',
+                    'Checklist Corto (Diseño Simplificado)'
+                ]
+                acts = self.env['ir.actions.act_window'].search([('name', 'in', actions_admin_names)])
+                for act in acts:
+                    act.write({'groups_id': [(6, 0, [admin_group.id])]})
 
                 _logger.info("Permisos de menús de Redes Sociales sincronizados exitosamente en _register_hook")
         except Exception as e:
             _logger.warning(f"No se pudo sincronizar permisos de menús en _register_hook: {e}")
         return res
+
+    @api.model
+    def _is_user_designer(self):
+        user = self.env.user
+        is_admin = (
+            user.has_group('Modulo-Redes---Extension-de-dise-o.group_redes_admin') or
+            user.has_group('project.group_project_manager') or
+            self.env.is_superuser() or
+            any(g.name in ['Administrador (Redes)', 'Administrador'] for g in user.groups_id)
+        )
+        if is_admin:
+            return False
+        return (
+            user.has_group('Modulo-Redes---Extension-de-dise-o.group_redes_designer') or
+            any(g.name in ['Diseñador (Redes)', 'Diseñador'] for g in user.groups_id)
+        )
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        if self._is_user_designer():
+            for vals in vals_list:
+                if vals.get('is_redes_project'):
+                    raise AccessError(_("Los diseñadores no tienen permisos para crear proyectos de Redes Sociales."))
+        return super(ProjectProject, self).create(vals_list)
+
+    def write(self, vals):
+        if self._is_user_designer():
+            if any(p.is_redes_project for p in self):
+                raise AccessError(_("Los diseñadores no tienen permisos para modificar proyectos de Redes Sociales."))
+        return super(ProjectProject, self).write(vals)
+
+    def unlink(self):
+        if self._is_user_designer():
+            if any(p.is_redes_project for p in self):
+                raise AccessError(_("Los diseñadores no tienen permisos para eliminar proyectos de Redes Sociales."))
+        return super(ProjectProject, self).unlink()
+
 
     is_redes_project = fields.Boolean(
         string='Es Proyecto de Redes',

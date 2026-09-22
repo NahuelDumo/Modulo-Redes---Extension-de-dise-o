@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from odoo import models, fields, api, _
+from odoo.exceptions import AccessError
 
 class RedesPlanTemplate(models.Model):
     _name = 'redes.plan.template'
@@ -32,6 +33,43 @@ class RedesPlanTemplate(models.Model):
     
     active = fields.Boolean(string='Activo', default=True)
 
+    def _check_redes_admin_rights(self):
+        user = self.env.user
+        is_admin = (
+            user.has_group('Modulo-Redes---Extension-de-dise-o.group_redes_admin') or
+            user.has_group('project.group_project_manager') or
+            self.env.is_superuser() or
+            any(g.name in ['Administrador (Redes)', 'Administrador'] for g in user.groups_id)
+        )
+        if not is_admin:
+            raise AccessError(_("Los diseñadores no tienen permisos para acceder o modificar los Planes de Redes Sociales."))
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        self._check_redes_admin_rights()
+        return super(RedesPlanTemplate, self).create(vals_list)
+
+    def write(self, vals):
+        self._check_redes_admin_rights()
+        return super(RedesPlanTemplate, self).write(vals)
+
+    def unlink(self):
+        self._check_redes_admin_rights()
+        return super(RedesPlanTemplate, self).unlink()
+
+    def read(self, fields=None, load='_classic_read'):
+        user = self.env.user
+        is_admin = (
+            user.has_group('Modulo-Redes---Extension-de-dise-o.group_redes_admin') or
+            user.has_group('project.group_project_manager') or
+            self.env.is_superuser() or
+            any(g.name in ['Administrador (Redes)', 'Administrador'] for g in user.groups_id)
+        )
+        if not is_admin:
+            raise AccessError(_("Los diseñadores no tienen permisos para acceder a los Planes de Redes Sociales."))
+        return super(RedesPlanTemplate, self).read(fields=fields, load=load)
+
+
 class RedesPlanLine(models.Model):
     _name = 'redes.plan.line'
     _description = 'Línea de Plan de Redes Sociales'
@@ -45,3 +83,40 @@ class RedesPlanLine(models.Model):
         ('mensual', 'Mensual'),
         ('por_publicacion', 'Por Publicación')
     ], string='Frecuencia', default='mensual', required=True)
+
+    def _check_redes_admin_rights(self):
+        user = self.env.user
+        is_admin = (
+            user.has_group('Modulo-Redes---Extension-de-dise-o.group_redes_admin') or
+            user.has_group('project.group_project_manager') or
+            self.env.is_superuser() or
+            any(g.name in ['Administrador (Redes)', 'Administrador'] for g in user.groups_id)
+        )
+        if not is_admin:
+            raise AccessError(_("Los diseñadores no tienen permisos para acceder o modificar los Planes de Redes Sociales."))
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        self._check_redes_admin_rights()
+        return super(RedesPlanLine, self).create(vals_list)
+
+    def write(self, vals):
+        self._check_redes_admin_rights()
+        return super(RedesPlanLine, self).write(vals)
+
+    def unlink(self):
+        self._check_redes_admin_rights()
+        return super(RedesPlanLine, self).unlink()
+
+    def read(self, fields=None, load='_classic_read'):
+        user = self.env.user
+        is_admin = (
+            user.has_group('Modulo-Redes---Extension-de-dise-o.group_redes_admin') or
+            user.has_group('project.group_project_manager') or
+            self.env.is_superuser() or
+            any(g.name in ['Administrador (Redes)', 'Administrador'] for g in user.groups_id)
+        )
+        if not is_admin:
+            raise AccessError(_("Los diseñadores no tienen permisos para acceder a los Planes de Redes Sociales."))
+        return super(RedesPlanLine, self).read(fields=fields, load=load)
+
