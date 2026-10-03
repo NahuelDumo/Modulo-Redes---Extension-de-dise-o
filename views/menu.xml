@@ -159,5 +159,10 @@
             <field name="sequence" type="int">20</field>
             <field name="groups_id" eval="[(6, 0, [ref('group_redes_admin')])]"/>
         </record>
+
+        <!-- Ocultar menú "Proyectos" general de Odoo para Diseñadores (solo ven "Mis tareas") -->
+        <record id="project.menu_projects" model="ir.ui.menu">
+            <field name="groups_id" eval="[(6, 0, [ref('project.group_project_manager'), ref('Modulo-Redes---Extension-de-dise-o.group_redes_admin')])]"/>
+        </record>
     </data>
 </odoo>

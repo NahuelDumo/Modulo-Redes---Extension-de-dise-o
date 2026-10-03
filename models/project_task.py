@@ -98,11 +98,13 @@ class ProjectTask(models.Model):
             }).id
         return super().copy(default)
 
+    ALLOWED_DESIGNER_FIELDS = {'stage_id', 'personal_stage_type_id', 'kanban_state'}
+
     def write(self, vals):
         if self._is_user_designer():
-            redes_tasks = self.filtered(lambda t: t.es_tarea_redes or (t.project_id and t.project_id.is_redes_project))
-            if redes_tasks:
-                raise AccessError(_("Los diseñadores tienen permisos de sólo lectura sobre las tareas de Redes Sociales y no pueden modificar el responsable, plazos u otros datos."))
+            forbidden = [f for f in vals.keys() if f not in self.ALLOWED_DESIGNER_FIELDS]
+            if forbidden:
+                raise AccessError(_("Los diseñadores únicamente tienen permiso para actualizar el estado o etapa de sus tareas asignadas."))
 
         res = super(ProjectTask, self).write(vals)
         if 'design_id' in vals:
@@ -122,7 +124,7 @@ class ProjectTask(models.Model):
         """Abre la vista formulario del diseño simplificado asociado"""
         self.ensure_one()
         if not self.design_id:
-            raise models.UserError(_("Esta tarea no tiene un diseño simplificado asociado."))
+            raise UserError(_("Esta tarea no tiene un diseño simplificado asociado."))
         return {
             'name': _('Diseño Simplificado'),
             'type': 'ir.actions.act_window',
