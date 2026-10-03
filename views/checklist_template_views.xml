@@ -1,14 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        <!-- Vista Formulario de Plantilla de Checklist extendida para Checklist Corto -->
+        <!-- Vista Formulario de Plantilla de Checklist extendida para Checklist Corto
+
+             OJO: el campo is_simplified NO puede llevar groups= porque el div de abajo lo usa
+             en attrs. Odoo exige que un campo usado en attrs exista al menos una vez en la vista
+             SIN restricción de grupos; si el único nodo del campo es group-restricted, la vista
+             no valida ("Field 'is_simplified' used in attrs is restricted to the group(s)...").
+             La restricción real no está en la vista sino en el modelo: ChecklistTemplate.create/
+             write/unlink llaman a _check_redes_admin_rights() y levantan AccessError. -->
         <record id="view_checklist_template_form_redes" model="ir.ui.view">
             <field name="name">design.checklist_template.form.redes</field>
             <field name="model">design.checklist_template</field>
             <field name="inherit_id" ref="ModuloDisenoOdoo.view_form_checklist_template"/>
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='etapa']" position="after">
-                    <field name="is_simplified" groups="Modulo-Redes---Extension-de-dise-o.group_redes_admin"/>
+                    <field name="is_simplified"/>
                 </xpath>
 
                 <xpath expr="//sheet" position="before">
