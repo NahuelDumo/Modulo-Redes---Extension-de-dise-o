@@ -160,8 +160,19 @@
             <field name="groups_id" eval="[(6, 0, [ref('group_redes_admin')])]"/>
         </record>
 
-        <!-- Ocultar menú "Proyectos" general de Odoo para Diseñadores (solo ven "Mis tareas") -->
+        <!-- Ocultar los menús generales de Odoo a los Diseñadores (Redes).
+             En Odoo ir.ui.menu.groups_id es una lista BLANCA con OR:
+                 not menu.groups_id or (menu.groups_id & groups)
+             No existe lista negra, así que no se puede ocultar un menú a un grupo
+             concreto. La única forma de que el Diseñador no vea "Proyectos" ni
+             "Informes" es enumerar quién SÍ los ve: Project Manager + Administrador (Redes).
+             El Diseñador conserva "Mis tareas" (project.menu_project_management),
+             que se le habilita por project.group_project_user. -->
         <record id="project.menu_projects" model="ir.ui.menu">
+            <field name="groups_id" eval="[(6, 0, [ref('project.group_project_manager'), ref('Modulo-Redes---Extension-de-dise-o.group_redes_admin')])]"/>
+        </record>
+
+        <record id="project.menu_project_report" model="ir.ui.menu">
             <field name="groups_id" eval="[(6, 0, [ref('project.group_project_manager'), ref('Modulo-Redes---Extension-de-dise-o.group_redes_admin')])]"/>
         </record>
     </data>

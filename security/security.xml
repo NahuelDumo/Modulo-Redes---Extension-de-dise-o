@@ -1,7 +1,7 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        <!-- Grupo Administrador (Redes) en la categorÃ­a Servicios / Proyectos -->
+        <!-- Grupo Administrador (Redes) en la categoría Servicios / Proyectos -->
         <record id="group_redes_admin" model="res.groups">
             <field name="name">Administrador (Redes)</field>
             <field name="category_id" ref="base.module_category_services_project"/>
@@ -10,9 +10,9 @@
             <field name="users" eval="[(4, ref('base.user_admin'))]"/>
         </record>
 
-        <!-- Grupo DiseÃ±ador (Redes) en la categorÃ­a Servicios / Proyectos -->
+        <!-- Grupo Diseñador (Redes) en la categoría Servicios / Proyectos -->
         <record id="group_redes_designer" model="res.groups">
-            <field name="name">DiseÃ±ador (Redes)</field>
+            <field name="name">Diseñador (Redes)</field>
             <field name="category_id" ref="base.module_category_services_project"/>
             <field name="implied_ids" eval="[(4, ref('base.group_user')), (4, ref('project.group_project_user'))]"/>
         </record>
@@ -38,7 +38,7 @@
         </record>
 
         <record id="project_project_redes_designer_rule" model="ir.rule">
-            <field name="name">Proyectos de Redes: acceso lectura DiseÃ±ador</field>
+            <field name="name">Proyectos de Redes: acceso lectura Diseñador</field>
             <field name="model_id" ref="project.model_project_project"/>
             <field name="domain_force">[(1, '=', 1)]</field>
             <field name="groups" eval="[(4, ref('group_redes_designer'))]"/>
@@ -61,7 +61,7 @@
         </record>
 
         <record id="project_task_redes_admin_write_rule" model="ir.rule">
-            <field name="name">Tareas de Redes: Administrador edita sÃ³lo tareas de proyectos de Redes</field>
+            <field name="name">Tareas de Redes: Administrador edita sólo tareas de proyectos de Redes</field>
             <field name="model_id" ref="project.model_project_task"/>
             <field name="domain_force">[('project_id.is_redes_project', '=', True)]</field>
             <field name="groups" eval="[(4, ref('group_redes_admin'))]"/>
@@ -71,46 +71,54 @@
             <field name="perm_unlink" eval="0"/>
         </record>
 
+        <!-- Restriccion GLOBAL del Disenador (Redes): solo sus tareas asignadas.
+             Sin grupos a proposito: Odoo ANDea las reglas globales con todas las
+             demas. Como el grupo implica project.group_project_user, la regla
+             core ir_rule_private_task (AND es explicito) le daria acceso a TODAS
+             las tareas de proyectos no-restringidos; en combo con una regla de
+             grupo (OR) la restriccion quedaria anulada.
+             La condicion va en el dominio: al resto de los usuarios no afecta.
+             Administrador (Redes) y Project Manager quedan exentos (PM implica
+             group_redes_admin), en linea con ProjectTask._is_user_designer(). -->
         <record id="project_task_redes_designer_rule" model="ir.rule">
-            <field name="name">Tareas: DiseÃ±ador solo sus tareas asignadas</field>
+            <field name="name">Tareas de Redes: Diseñador solo ve y edita sus tareas asignadas</field>
             <field name="model_id" ref="project.model_project_task"/>
             <field name="domain_force">[('user_ids', 'in', [user.id])] if user.has_group('Modulo-Redes---Extension-de-dise-o.group_redes_designer') and not user.has_group('Modulo-Redes---Extension-de-dise-o.group_redes_admin') else [(1, '=', 1)]</field>
-            <field name="groups" eval="[(4, ref('Modulo-Redes---Extension-de-dise-o.group_redes_designer'))]"/>
-            <field name="perm_read" eval="1"/>
-            <field name="perm_write" eval="1"/>
-            <field name="perm_create" eval="0"/>
-            <field name="perm_unlink" eval="0"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
         </record>
 
-        <!-- RestricciÃ³n: el Administrador (Redes) que NO es Administrador de Proyectos sÃ³lo ve Redes.
+
+        <!-- Restricción: el Administrador (Redes) que NO es Administrador de Proyectos sólo ve Redes.
              Son reglas globales (sin grupos) porque las de grupo se suman (OR) con las de Usuario de Proyecto
-             y no restringen. La condiciÃ³n va en el dominio; al resto de los usuarios no los afecta. -->
+             y no restringen. La condición va en el dominio; al resto de los usuarios no los afecta. -->
         <record id="project_project_redes_only_rule" model="ir.rule">
-            <field name="name">Administrador (Redes): sÃ³lo proyectos de Redes</field>
+            <field name="name">Administrador (Redes): sólo proyectos de Redes</field>
             <field name="model_id" ref="project.model_project_project"/>
             <field name="domain_force">[('is_redes_project', '=', True)] if user.has_group('Modulo-Redes---Extension-de-dise-o.group_redes_admin') and not user.has_group('project.group_project_manager') else [(1, '=', 1)]</field>
         </record>
 
         <record id="project_task_redes_only_rule" model="ir.rule">
-            <field name="name">Administrador (Redes): sÃ³lo tareas de proyectos de Redes</field>
+            <field name="name">Administrador (Redes): sólo tareas de proyectos de Redes</field>
             <field name="model_id" ref="project.model_project_task"/>
             <field name="domain_force">['|', ('project_id', '=', False), ('project_id.is_redes_project', '=', True)] if user.has_group('Modulo-Redes---Extension-de-dise-o.group_redes_admin') and not user.has_group('project.group_project_manager') else [(1, '=', 1)]</field>
         </record>
 
-        <!-- Reglas para DiseÃ±os Simplificados (design.design) -->
+        <!-- Reglas para Diseños Simplificados (design.design) -->
         <record id="design_design_redes_admin_rule" model="ir.rule">
-            <field name="name">DiseÃ±o Simplificado: acceso total Administrador</field>
+            <field name="name">Diseño Simplificado: acceso total Administrador</field>
             <field name="model_id" search="[('model', '=', 'design.design')]" model="ir.model"/>
             <field name="domain_force">[(1, '=', 1)]</field>
             <field name="groups" eval="[(4, ref('group_redes_admin'))]"/>
         </record>
 
         <record id="design_design_redes_designer_rule" model="ir.rule">
-            <field name="name">DiseÃ±o Simplificado: DiseÃ±ador sÃ³lo ve sus diseÃ±os asignados</field>
+            <field name="name">Diseño Simplificado: Diseñador sólo ve sus diseños asignados</field>
             <field name="model_id" search="[('model', '=', 'design.design')]" model="ir.model"/>
             <field name="domain_force">['|', ('create_uid', '=', user.id), ('task_id.user_ids', 'in', [user.id])]</field>
             <field name="groups" eval="[(4, ref('group_redes_designer'))]"/>
         </record>
     </data>
 </odoo>
-

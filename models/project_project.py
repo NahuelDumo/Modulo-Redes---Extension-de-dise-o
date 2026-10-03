@@ -133,25 +133,11 @@ class ProjectProject(models.Model):
             any(g.name in ['Diseñador (Redes)', 'Diseñador'] for g in user.groups_id)
         )
 
-    @api.model_create_multi
-    def create(self, vals_list):
-        if self._is_user_designer():
-            for vals in vals_list:
-                if vals.get('is_redes_project'):
-                    raise AccessError(_("Los diseñadores no tienen permisos para crear proyectos de Redes Sociales."))
-        return super(ProjectProject, self).create(vals_list)
-
-    def write(self, vals):
-        if self._is_user_designer():
-            if any(p.is_redes_project for p in self):
-                raise AccessError(_("Los diseñadores no tienen permisos para modificar proyectos de Redes Sociales."))
-        return super(ProjectProject, self).write(vals)
-
     def unlink(self):
         if self._is_user_designer():
             if any(p.is_redes_project for p in self):
                 raise AccessError(_("Los diseñadores no tienen permisos para eliminar proyectos de Redes Sociales."))
-        return super(ProjectProject, self).unlink()
+        return super().unlink()
 
 
     is_redes_project = fields.Boolean(
@@ -287,6 +273,16 @@ class ProjectProject(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
+        # El ACL abre create al Administrador (Redes), pero las reglas de lectura
+        # (project_project_redes_only_rule) y _check_redes_access() lo acotan a
+        # proyectos de Redes. Se fuerza el flag acá para que no pueda crear un
+        # proyecto que después no va a poder ver ni editar.
+        if (not self.env.su
+                and self.env.user.has_group('Modulo-Redes---Extension-de-dise-o.group_redes_admin')
+                and not self.env.user.has_group('project.group_project_manager')):
+            for vals in vals_list:
+                vals['is_redes_project'] = True
+
         for vals in vals_list:
             p_name = (vals.get('name') or '').lower()
             es_de_redes = (
@@ -301,7 +297,7 @@ class ProjectProject(models.Model):
                     if etapa_mes:
                         vals['stage_id'] = etapa_mes.id
 
-        projects = super(ProjectProject, self).create(vals_list)
+        projects = super().create(vals_list)
 
         for project in projects:
             p_name = (project.name or '').lower()

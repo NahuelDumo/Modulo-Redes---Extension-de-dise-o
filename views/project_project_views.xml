@@ -80,5 +80,22 @@
                 </xpath>
             </field>
         </record>
+
+        <!-- El item "Ajustes" de la tarjeta kanban del proyecto viene en el core con
+             groups="project.group_project_manager", asi que el Administrador (Redes) que no es
+             Project Manager no llega a Duplicar/Archivar. Se le suma el grupo de Redes al de
+             Project Manager (groups es lista blanca con OR y admite el prefijo "!").
+             OJO: el div seUbica por el link type="edit" (Settings) porque hay otro div
+             identico con el mismo groups que es el selector de color. -->
+        <record id="view_project_kanban_redes_admin" model="ir.ui.view">
+            <field name="name">project.project.kanban.redes.admin</field>
+            <field name="model">project.project</field>
+            <field name="inherit_id" ref="project.view_project_kanban"/>
+            <field name="arch" type="xml">
+                <xpath expr="//div[@role='menuitem'][.//a[@type='edit']]" position="attributes">
+                    <attribute name="groups">project.group_project_manager,Modulo-Redes---Extension-de-dise-o.group_redes_admin</attribute>
+                </xpath>
+            </field>
+        </record>
     </data>
 </odoo>
